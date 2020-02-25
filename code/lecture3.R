@@ -45,3 +45,40 @@ ll <- list(abrakadabra = 1, b = 1:2, c = "Hello", d = list( a = 1, b = 2))
 ll$a
 
 ll[["abrakadabra"]]
+
+##Time series
+
+## Load US cpi data
+library(midasr)
+data(UScpiqs)
+UScpiqs
+
+##Convert it to time series
+cpi <- ts(UScpiqs[,2], start=1960, frequency = 4)
+cpi
+
+#See nice x axis ticks
+plot(cpi)
+
+#Compare with non-time series objects
+plot(UScpiqs[,2])
+plot(UScpiqs[,2])
+plot(UScpiqs[,1],UScpiqs[,2])
+
+##Select time series elements directly
+
+cpi[1:5]
+
+##Use window function to refer to time dimension
+window(cpi, start=c(1980,1), end=c(1980,4))
+sum(window(cpi, start=c(1980,1), end=c(1980,4)))
+
+##Frequency and time
+frequency(cpi)
+time(cpi)
+
+## Various frequencies can be used. Most common are 4 and 12 for quarterly and monthly time series
+ts(1:10, frequency=3)
+
+time(ts(1:10, frequency=3))
+
