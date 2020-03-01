@@ -8,10 +8,12 @@
 
 ## 3. Select regions 1, 5 and 7 by alphabetical order.  Plot levels of cases in those regions in one graph. The x axis should be a date. Add labels for axes and the title. The input of the task is the data.frame from step 2. The output is one graph.
 
-## 4. Calculate the growths for these regions. Plot growths of those regions in one graph.The x axis should be a date. Add labels for axes and the title. The input of the task is the data.frame from the step 2. The outputs are the data.frame containing the growhts and the graph.
+## 4. Calculate the growths for these regions. Plot growths of those regions in one graph.The x axis should be a date. Add labels for axes and the title. The input of the task is the data.frame from the step 2. The outputs are the data.frame containing the growths and the graph.
 
 ##You can use package lubridate for working with dates. All other tasks should be done with base R. The result of the task should be R code which loads the data and performs the all the tasks. The code should run cleanly, i.e. should not produce any errors. All of the code should have comments (1, 2 sentences) explaining what are you trying to do. 
 
 ## The weights of the subtasks for the final grade: 10%, 40%, 20%, 30%. 
+
+## The grading will be done anonymously. Do not add your name and surname to the source code. However please add some unique identificator, just in case. 
 
 
