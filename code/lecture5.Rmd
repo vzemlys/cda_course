@@ -1,0 +1,146 @@
+---
+title: "Lecture 5"
+output:
+  html_document:
+    df_print: paged
+---
+
+Read the new Covid-19 data
+
+```{r}
+library(tidyverse)
+dt_confirmed <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv", stringsAsFactors = FALSE)
+
+dt_deaths <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv", stringsAsFactors = FALSE)
+
+dt_recovered <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv", stringsAsFactors = FALSE)
+
+```
+
+Check whether the structure is the same
+
+```{r}
+sapply(list(dt_confirmed, dt_deaths, dt_recovered), colnames)
+```
+ 
+Convert to the long format and combine
+```{r}
+library(tidyr)
+library(lubridate)
+dt_confirmed_long <- dt_confirmed %>% pivot_longer(cols = starts_with("X"), names_to = "day", values_to = "confirmed")
+
+dt_deaths_long <- dt_confirmed %>% pivot_longer(cols = starts_with("X"), names_to = "day", values_to = "deaths")
+
+dt_deaths_long <- dt_deaths %>% pivot_longer(cols = starts_with("X"), names_to = "day", values_to = "deaths")
+
+dt_recovered_long <- dt_recovered %>% pivot_longer(cols = starts_with("X"), names_to = "day", values_to = "recovered")
+
+covid_raw <- dt_confirmed_long %>% 
+    inner_join(dt_deaths_long %>% select(-Lat,-Long), by = c("Province.State", "Country.Region", "day")) %>% 
+    inner_join(dt_recovered_long %>% select(-Lat,-Long), by = c("Province.State", "Country.Region", "day"))
+
+covid <- covid_raw %>% mutate(day = mdy(paste0(gsub("X","", day),"20")))
+
+colnames(covid) <- tolower(colnames(covid))
+colnames(covid)[1:2] <- c("region","country")
+covid
+```
+
+Aggregate by country
+
+```{r}
+covid_country <- covid %>% select(-lat, -long, -region) %>% group_by(country, day) %>% summarise_all(sum) %>% ungroup %>% arrange(country,day)
+covid_country
+```
+
+Calculate absolute growths and percentage growths
+```{r}
+growth <- function(x) c(NA, diff(x)/x[-length(x)])
+agrowth <- function(x)c(NA, diff(x))
+
+covid_country <- covid_country %>% group_by(country) %>% mutate_at(c("confirmed", "deaths", "recovered"), list(diff = agrowth, growth = growth))
+covid_country
+```
+
+
+Plot all of the countries
+```{r}
+ggplot(aes(x = day, y = confirmed, colour = country), data = covid_country) + geom_line()
+```
+
+
+Plot all of the countries one by one
+```{r}
+ggplot(aes(x = day, y = confirmed), data = covid_country) + geom_line() + facet_wrap(~country, scales="free_y")
+```
+
+Select only countries with  10 cases in the last 7 days
+
+```{r}
+day7 <- covid_country %>% filter(day <= max(day) & day > max(day) - 7) %>% group_by(country) %>% summarize(max_cases = max(confirmed_diff)) %>% filter( max_cases > 7)
+day7 %>% arrange(-max_cases)
+```
+
+Plot the growths for these cases
+
+```{r}
+ggplot(aes(x = day, y = confirmed_diff), data = covid_country %>% filter(country %in% day7$country) %>% filter(day > max(day) - 7)) + geom_line() + facet_wrap(~country, scales="free_y")
+```
+
+
+Plot the deaths for selected countries
+
+```{r}
+ggplot(aes(x = day, y = deaths_diff), data = covid_country %>% filter(country %in% day7$country) %>% filter(day > max(day) - 7)) + geom_line() + facet_wrap(~country, scales="free_y")
+```
+
+Inspect death percentage variation
+```{r}
+pdeath <- covid_country %>% mutate(pdeath = deaths/confirmed) %>% filter(pdeath > 0) %>% 
+    select(country, day, deaths, confirmed, pdeath) 
+pdeath
+```
+
+Select only unique points 
+
+```{r}
+pdeath1 <- covid_country %>% select(country, confirmed, deaths) %>% unique %>% mutate(pdeath = deaths/confirmed) %>% filter(confirmed > 0) %>% filter(pdeath>0)
+pdeath1
+```
+
+
+Explore distribution
+```{r}
+par(mfrow = c(1, 2))
+hist(pdeath1$pdeath)
+boxplot(pdeath1$pdeath)
+```
+
+
+Inspect outliers
+```{r}
+pdeath1 %>% filter(pdeath>0.2)
+```
+
+On which days it has occured?
+```{r}
+pdeath %>% filter(pdeath>0.2)
+```
+
+Explore distributions with outliers removed
+
+```{r}
+pdeath2 <- pdeath1 %>% filter(pdeath < 0.2)
+par(mfrow = c(1, 2))
+hist(pdeath2$pdeath)
+boxplot(pdeath2$pdeath)
+```
+
+Do a scatter plot
+```{r}
+ggplot(aes(x = confirmed, y = deaths), data = pdeath2) + geom_point() + geom_smooth(method="lm")
+```
+
+```{r}
+ggplot(aes(x = log(confirmed), y = log(deaths)), data = pdeath2) + geom_point(aes(colour=country)) 
+```
