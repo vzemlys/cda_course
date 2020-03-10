@@ -1,0 +1,98 @@
+---
+title: "CDA Lecture 6"
+output: html_notebook
+---
+
+Load data from Matloff example
+```{r}
+mlb <- read.table('https://raw.githubusercontent.com/matloff/fasteR/master/data/mlb.txt',header=TRUE)
+
+mlb
+```
+
+Save and load
+```{r}
+library(writexl)
+library(readxl)
+mlb %>% write_xlsx("MLB.xlsx")
+mlb1 <- read_xlsx("MLB.xlsx") 
+```
+
+EDA
+```{r}
+mlb <- mlb %>% mutate(Height = Height*2.54, Weight = Weight*0.45359237)
+mlb
+```
+
+Distribution of height
+```{r}
+boxplot(mlb$Height)
+```
+```{r}
+mlb$Height %>% summary
+```
+
+Distribution of weight
+```{r}
+boxplot(mlb$Weight)
+```
+
+```{r}
+mlb$Weight %>% summary
+```
+
+Who has the larget weight
+```{r}
+mlb %>% filter(Weight > 120)
+```
+
+```{r}
+plot(x = mlb$Height, y = mlb$Weight, col = mlb$Position)
+```
+
+```{r}
+library(ggplot2)
+ggplot(aes(x = Height, y = Weight, colour = Team), data = mlb) + geom_point()
+```
+
+```{r}
+plot(x = mlb$Height, y = mlb$Weight)
+```
+
+Weight vs Age
+
+```{r}
+plot(x = mlb$Age, y = mlb$Weight)
+```
+
+```{r}
+out <- lm(Weight~Age, data = mlb)
+summary(out)
+```
+
+```{r}
+plot(x = mlb$Age, y = mlb$Weight)
+abline(out, col = 2)
+```
+
+```{r}
+summary(out)
+```
+
+
+```{r}
+ggplot(aes(x = Age, y = Weight), data = mlb) + geom_point() + geom_smooth(method = "lm")
+```
+
+```{r}
+ggplot(aes(x = Age, y = Weight), data = mlb) + geom_point() + geom_smooth(method = "lm") + facet_wrap(~Position)
+```
+
+```{r}
+out <- lm(Weight~Age+Height, data = mlb)
+summary(out)
+```
+
+```{r}
+plot(residuals(out))
+```

@@ -28,8 +28,6 @@ library(tidyr)
 library(lubridate)
 dt_confirmed_long <- dt_confirmed %>% pivot_longer(cols = starts_with("X"), names_to = "day", values_to = "confirmed")
 
-dt_deaths_long <- dt_confirmed %>% pivot_longer(cols = starts_with("X"), names_to = "day", values_to = "deaths")
-
 dt_deaths_long <- dt_deaths %>% pivot_longer(cols = starts_with("X"), names_to = "day", values_to = "deaths")
 
 dt_recovered_long <- dt_recovered %>% pivot_longer(cols = starts_with("X"), names_to = "day", values_to = "recovered")
@@ -76,7 +74,7 @@ ggplot(aes(x = day, y = confirmed), data = covid_country) + geom_line() + facet_
 Select only countries with  10 cases in the last 7 days
 
 ```{r}
-day7 <- covid_country %>% filter(day <= max(day) & day > max(day) - 7) %>% group_by(country) %>% summarize(max_cases = max(confirmed_diff)) %>% filter( max_cases > 7)
+day7 <- covid_country %>% filter(day <= max(day) & day > max(day) - 7) %>% group_by(country) %>% summarize(max_cases = max(confirmed_diff)) %>% filter( max_cases > 10)
 day7 %>% arrange(-max_cases)
 ```
 
@@ -118,7 +116,7 @@ boxplot(pdeath1$pdeath)
 
 Inspect outliers
 ```{r}
-pdeath1 %>% filter(pdeath>0.2)
+pdeath1 %>% filter(pdeath>0.1)
 ```
 
 On which days it has occured?
@@ -129,7 +127,7 @@ pdeath %>% filter(pdeath>0.2)
 Explore distributions with outliers removed
 
 ```{r}
-pdeath2 <- pdeath1 %>% filter(pdeath < 0.2)
+pdeath2 <- pdeath1 %>% filter(pdeath < 0.1)
 par(mfrow = c(1, 2))
 hist(pdeath2$pdeath)
 boxplot(pdeath2$pdeath)
