@@ -2,13 +2,120 @@
 title: "CDA Lecture 7"
 output: distill::distill_article
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-To use this notebook, open it in RStudio and run the code in the blocks.
+To use this notebook, open [it](https://github.com/vzemlys/cda_course/blob/master/lecture7.Rmd) in RStudio and run the code in the blocks.
 
-Load the the data 
+The purpose of this lecture is to understand the stages of the data analysis project. 
+
+We will use already prepared data set available in R from the package `AER`. You will need to install it.
+
 
 ```{r}
 library(AER)
+library(rmarkdown)
+library(dplyr)
+library(ggplot2)
+data("GrowthDJ")
+dj <- GrowthDJ
+dj %>% paged_table
+```
+
+You can ignore package `rmarkdown` and function `paged_table`. It is used to format the output so it looks like the nice browseable table in the HTML page. 
+
+This data set contains economic growth data. The format of this is a table with one country per row and economic variables in columns. You can find more info using R help:
+
+```{r, eval = FALSE}
+?GrowthDJ
+```
+
+In this lecture we will try to determine the factors for economic growth.
+
+First let us do the summary of the dataset
+
+```{r}
+summary(dj)
+```
+
+Note the NAs, which mean that some of the data is missing. The most simple way of dealing with NAs is discarding them.
+
+```{r}
+ndj <- na.omit(dj)
+nrow(dj) - nrow(ndj)
+```
+
+Compare this number with number of NAs in individual columns. Function `na.omit` removes all rows which contain at least one NA. There are 21 such rows. 
+
+We can check which rows has the most NAs.
+
+```{r}
+table(apply(dj, 1, function(x)sum(is.na(x))))
+```
+
+We see that 3 countries have 5 missing values. Since we have only 6 columns which contain NA variables that is a lot of missing data for a country. 
+
+Graphs are important part of exploratory data analysis
+
+```{r}
+ggplot(aes(x = gdp60, y =gdp85), data = dj) + geom_point()
+```
+
+When we do plot only two variables are used. So only 16 countries are removed. If we had used data set `ndj` we woudl have lost 5 data points.
+
+In this graph we see a very clear outlier. Look at the individual summaries for the variables. This country has the maximum gdp both in 1960 and in 1985. But its gdp per capita has actually has shrunk.  How can we identify are there any additional countries for which the gdp per capita did not grow? We can add the $y = x$ line on the graph. If all the points are above it, then we have the growth, as $y>x$ means $gdp85 > gdp60$.
+
+```{r}
+ggplot(aes(x = gdp60, y =gdp85), data = dj) + geom_point() + geom_abline(intercept = 0, slope = 1)
+```
+
+We can also work with the table data directly:
+
+```{r}
+dj %>% filter(gdp85<gdp60) %>% paged_table
+```
+
+As you can see there are 16 countries for which gdp per capita did not grow. The question is why? Inspecting the data in various angles can gives as some preliminary ideas
+
+If we have factor variables it is helpful to add them to graph in terms of colors, shape or size. 
+
+```{r}
+ggplot(aes(x = gdp60, y =gdp85, color = oecd, size = oil, shape = inter), data = dj) + geom_point() + geom_abline(intercept = 0, slope = 1)
+```
+
+This helped us identify that our outlier is an oil producing country without the reliable data and not beloging to OECD.  Note that size in this case might result in points overlapping. To supply the manual sizes use `scale_size_manual`. 
+
+```{r}
+ggplot(aes(x = gdp60, y =gdp85, color = oecd, size = oil, shape = inter), data = dj) + geom_point() + geom_abline(intercept = 0, slope = 1)+ scale_size_manual(values = c("yes" = 2.5, "no" = 1))
+```
+
+It is always advisable to convert data to the log scale as this shrinks data and allows seeing more details.
+
+```{r}
+ggplot(aes(x = log(gdp60), y = log(gdp85)), data = dj) + geom_point() + geom_abline(intercept = 0, slope = 1)
+```
+
+As an exercise add all the colors to graph with the logarithms. 
+
+The following graphs show a much less clear relationship between the variables
+
+```{r}
+ggplot(aes(x = literacy60, y = gdpgrowth), data = dj) + geom_point()
 ```
 
 
+```{r}
+ggplot(aes(x = invest, y = gdpgrowth), data = dj) + geom_point()
+```
+
+Another useful plot for seeing the pairwise relationships is correlation plot. Correlation measures the association between to variables. It can have values from -1 to 1. Absolute values closer to 1 indicate that variables are more associated, i.e. related. 
+
+```{r}
+library(corrplot)
+corrplot(cor(ndj[,-3:-1]), method = "number")
+```
+
+Correlation should confirm your intuition. If you expect variables to be associated then the correlation should be significant. All the deviations from the intuition should be inspected. 
+
+As an exercise identify pairs of variables for which you think correlation should be significant but is not or vice versa and plot these variables. Can you identify why this is the case using the groupings for oecd and oil producing countries?

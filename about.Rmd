@@ -1,6 +1,5 @@
 ---
 title: "About"
-description: CDA course
 ---
 
 ```{r setup, include=FALSE}

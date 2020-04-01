@@ -1254,6 +1254,8 @@
   </script>
   
   <!--/radix_placeholder_distill-->
+  <link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+  <script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
   <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
   <script src="site_libs/bowser-1.9.3/bowser.min.js"></script>
   <script src="site_libs/webcomponents-2.0.0/webcomponents.js"></script>
@@ -1297,11 +1299,142 @@
 
 
 <div class="d-article">
-<p>To use this notebook, open it in RStudio and run the code in the blocks.</p>
-<p>Load the the data</p>
+<p>To use this notebook, open <a href="https://github.com/vzemlys/cda_course/blob/master/lecture7.Rmd">it</a> in RStudio and run the code in the blocks.</p>
+<p>The purpose of this lecture is to understand the stages of the data analysis project.</p>
+<p>We will use already prepared data set available in R from the package <code>AER</code>. You will need to install it.</p>
 <div class="layout-chunk" data-layout="l-body">
-
+<pre class="r"><code>
+library(AER)
+library(rmarkdown)
+library(dplyr)
+library(ggplot2)
+data(&quot;GrowthDJ&quot;)
+dj &lt;- GrowthDJ
+dj %&gt;% paged_table</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["oil"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["inter"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["oecd"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["gdp60"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["gdp85"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["gdpgrowth"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["popgrowth"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["invest"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["school"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["literacy60"],"name":[10],"type":["dbl"],"align":["right"]}],"data":[{"1":"no","2":"yes","3":"no","4":"2485","5":"4371","6":"4.8","7":"2.6","8":"24.1","9":"4.5","10":"10","_rn_":"1"},{"1":"no","2":"no","3":"no","4":"1588","5":"1171","6":"0.8","7":"2.1","8":"5.8","9":"1.8","10":"5","_rn_":"2"},{"1":"no","2":"no","3":"no","4":"1116","5":"1071","6":"2.2","7":"2.4","8":"10.8","9":"1.8","10":"5","_rn_":"3"},{"1":"no","2":"yes","3":"no","4":"959","5":"3671","6":"8.6","7":"3.2","8":"28.3","9":"2.9","10":"NA","_rn_":"4"},{"1":"no","2":"no","3":"no","4":"529","5":"857","6":"2.9","7":"0.9","8":"12.7","9":"0.4","10":"2","_rn_":"5"},{"1":"no","2":"no","3":"no","4":"755","5":"663","6":"1.2","7":"1.7","8":"5.1","9":"0.4","10":"14","_rn_":"6"},{"1":"no","2":"yes","3":"no","4":"889","5":"2190","6":"5.7","7":"2.1","8":"12.8","9":"3.4","10":"19","_rn_":"7"},{"1":"no","2":"no","3":"no","4":"838","5":"789","6":"1.5","7":"1.7","8":"10.5","9":"1.4","10":"7","_rn_":"8"},{"1":"no","2":"no","3":"no","4":"908","5":"462","6":"-0.9","7":"1.9","8":"6.9","9":"0.4","10":"6","_rn_":"9"},{"1":"no","2":"no","3":"no","4":"1009","5":"2624","6":"6.2","7":"2.4","8":"28.8","9":"3.8","10":"16","_rn_":"10"},{"1":"no","2":"no","3":"no","4":"907","5":"2160","6":"6.0","7":"2.5","8":"16.3","9":"7.0","10":"26","_rn_":"11"},{"1":"no","2":"yes","3":"no","4":"533","5":"608","6":"2.8","7":"2.3","8":"5.4","9":"1.1","10":"15","_rn_":"12"},{"1":"yes","2":"no","3":"no","4":"1307","5":"5350","6":"7.0","7":"1.4","8":"22.1","9":"2.6","10":"NA","_rn_":"13"},{"1":"yes","2":"no","3":"no","4":"799","5":"NA","6":"3.6","7":"NA","8":"18.1","9":"1.5","10":"NA","_rn_":"14"},{"1":"no","2":"no","3":"no","4":"1009","5":"727","6":"1.0","7":"2.3","8":"9.1","9":"4.7","10":"27","_rn_":"15"},{"1":"yes","2":"no","3":"no","4":"746","5":"869","6":"2.2","7":"1.6","8":"10.9","9":"NA","10":"7","_rn_":"16"},{"1":"no","2":"yes","3":"no","4":"1386","5":"1704","6":"5.1","7":"4.3","8":"12.4","9":"2.3","10":"5","_rn_":"17"},{"1":"no","2":"yes","3":"no","4":"944","5":"1329","6":"4.8","7":"3.4","8":"17.4","9":"2.4","10":"20","_rn_":"18"},{"1":"yes","2":"no","3":"no","4":"431","5":"1483","6":"6.8","7":"1.9","8":"12.6","9":"2.0","10":"NA","_rn_":"19"},{"1":"no","2":"no","3":"no","4":"863","5":"944","6":"3.3","7":"3.0","8":"21.5","9":"2.5","10":"9","_rn_":"20"},{"1":"no","2":"yes","3":"no","4":"1194","5":"975","6":"1.4","7":"2.2","8":"7.1","9":"2.6","10":"50","_rn_":"21"},{"1":"no","2":"yes","3":"no","4":"455","5":"823","6":"4.8","7":"2.4","8":"13.2","9":"0.6","10":"25","_rn_":"22"},{"1":"no","2":"yes","3":"no","4":"737","5":"710","6":"2.1","7":"2.2","8":"7.3","9":"1.0","10":"3","_rn_":"23"},{"1":"no","2":"no","3":"no","4":"777","5":"1038","6":"3.3","7":"2.2","8":"25.6","9":"1.0","10":"5","_rn_":"24"},{"1":"no","2":"no","3":"no","4":"1973","5":"2967","6":"4.2","7":"2.6","8":"17.1","9":"7.3","10":"NA","_rn_":"25"},{"1":"no","2":"yes","3":"no","4":"1030","5":"2348","6":"5.8","7":"2.5","8":"8.3","9":"3.6","10":"14","_rn_":"26"},{"1":"no","2":"no","3":"no","4":"1420","5":"1035","6":"1.4","7":"2.7","8":"6.1","9":"0.7","10":"11","_rn_":"27"},{"1":"no","2":"no","3":"no","4":"539","5":"841","6":"4.4","7":"2.6","8":"10.3","9":"0.5","10":"1","_rn_":"28"},{"1":"no","2":"yes","3":"no","4":"1055","5":"1186","6":"2.8","7":"2.4","8":"12.0","9":"2.3","10":"15","_rn_":"29"},{"1":"no","2":"no","3":"no","4":"460","5":"696","6":"4.5","7":"2.8","8":"7.9","9":"0.4","10":"16","_rn_":"30"},{"1":"no","2":"yes","3":"no","4":"1392","5":"1450","6":"2.5","7":"2.3","8":"9.6","9":"1.7","10":"6","_rn_":"31"},{"1":"no","2":"no","3":"no","4":"511","5":"805","6":"3.4","7":"1.6","8":"10.9","9":"1.7","10":"7","_rn_":"32"},{"1":"no","2":"no","3":"no","4":"901","5":"657","6":"1.8","7":"3.1","8":"13.8","9":"1.1","10":"2","_rn_":"33"},{"1":"no","2":"yes","3":"no","4":"4768","5":"7064","6":"3.9","7":"2.3","8":"21.6","9":"3.0","10":"57","_rn_":"34"},{"1":"no","2":"no","3":"no","4":"1254","5":"1038","6":"1.8","7":"2.6","8":"13.2","9":"2.0","10":"13","_rn_":"35"},{"1":"yes","2":"no","3":"no","4":"817","5":"NA","6":"7.2","7":"NA","8":"17.7","9":"3.7","10":"NA","_rn_":"36"},{"1":"no","2":"yes","3":"no","4":"383","5":"710","6":"5.3","7":"2.9","8":"18.0","9":"0.5","10":"10","_rn_":"37"},{"1":"no","2":"no","3":"no","4":"777","5":"978","6":"3.4","7":"2.5","8":"15.5","9":"2.9","10":"10","_rn_":"38"},{"1":"no","2":"yes","3":"no","4":"1623","5":"3661","6":"5.6","7":"2.4","8":"13.8","9":"4.3","10":"16","_rn_":"39"},{"1":"no","2":"no","3":"no","4":"601","5":"667","6":"3.5","7":"3.1","8":"4.1","9":"1.1","10":"35","_rn_":"40"},{"1":"no","2":"no","3":"no","4":"594","5":"412","6":"0.9","7":"2.4","8":"6.5","9":"3.6","10":"31","_rn_":"41"},{"1":"no","2":"yes","3":"no","4":"1410","5":"1217","6":"2.1","7":"2.7","8":"31.7","9":"2.4","10":"29","_rn_":"42"},{"1":"no","2":"yes","3":"no","4":"1187","5":"2107","6":"5.1","7":"2.8","8":"21.1","9":"4.4","10":"39","_rn_":"43"},{"1":"yes","2":"no","3":"no","4":"1224","5":"NA","6":"1.6","7":"NA","8":"6.9","9":"0.9","10":"8","_rn_":"44"},{"1":"yes","2":"no","3":"no","4":"NA","5":"NA","6":"NA","7":"NA","8":"30.0","9":"12.1","10":"NA","_rn_":"45"},{"1":"no","2":"yes","3":"no","4":"846","5":"1221","6":"4.0","7":"2.6","8":"6.8","9":"3.2","10":"22","_rn_":"46"},{"1":"no","2":"yes","3":"no","4":"517","5":"1031","6":"4.5","7":"1.7","8":"11.4","9":"3.5","10":"60","_rn_":"47"},{"1":"no","2":"yes","3":"no","4":"3085","5":"13372","6":"8.9","7":"3.0","8":"19.9","9":"7.2","10":"70","_rn_":"48"},{"1":"no","2":"yes","3":"no","4":"978","5":"1339","6":"3.6","7":"2.4","8":"16.8","9":"5.1","10":"28","_rn_":"49"},{"1":"yes","2":"no","3":"no","4":"3606","5":"7400","6":"6.3","7":"3.4","8":"18.4","9":"6.5","10":"16","_rn_":"50"},{"1":"yes","2":"no","3":"no","4":"4916","5":"5626","6":"3.8","7":"3.2","8":"16.2","9":"7.4","10":"18","_rn_":"51"},{"1":"no","2":"yes","3":"no","4":"4802","5":"10450","6":"5.9","7":"2.8","8":"28.5","9":"9.5","10":"84","_rn_":"52"},{"1":"no","2":"yes","3":"yes","4":"3493","5":"13893","6":"6.8","7":"1.2","8":"36.0","9":"10.9","10":"98","_rn_":"53"},{"1":"no","2":"yes","3":"no","4":"2183","5":"4312","6":"5.4","7":"2.7","8":"17.6","9":"10.8","10":"32","_rn_":"54"},{"1":"no","2":"yes","3":"no","4":"1285","5":"4775","6":"7.9","7":"2.7","8":"22.3","9":"10.2","10":"71","_rn_":"55"},{"1":"yes","2":"no","3":"no","4":"77881","5":"25635","6":"2.4","7":"6.8","8":"9.5","9":"9.6","10":"47","_rn_":"56"},{"1":"no","2":"yes","3":"no","4":"2154","5":"5788","6":"7.1","7":"3.2","8":"23.2","9":"7.3","10":"53","_rn_":"57"},{"1":"no","2":"no","3":"no","4":"833","5":"974","6":"2.6","7":"2.0","8":"5.9","9":"2.3","10":"9","_rn_":"58"},{"1":"yes","2":"no","3":"no","4":"NA","5":"15584","6":"NA","7":"3.3","8":"15.6","9":"2.7","10":"NA","_rn_":"59"},{"1":"no","2":"yes","3":"no","4":"1077","5":"2175","6":"5.8","7":"3.0","8":"12.2","9":"3.0","10":"15","_rn_":"60"},{"1":"no","2":"yes","3":"no","4":"1668","5":"2430","6":"4.5","7":"3.0","8":"14.9","9":"10.6","10":"72","_rn_":"61"},{"1":"yes","2":"no","3":"no","4":"6731","5":"11057","6":"6.1","7":"4.1","8":"12.8","9":"3.1","10":"3","_rn_":"62"},{"1":"no","2":"yes","3":"no","4":"2793","5":"14678","6":"9.2","7":"2.6","8":"32.2","9":"9.0","10":"83","_rn_":"63"},{"1":"no","2":"yes","3":"no","4":"1794","5":"2482","6":"3.7","7":"2.4","8":"14.8","9":"8.3","10":"75","_rn_":"64"},{"1":"no","2":"yes","3":"no","4":"2382","5":"6042","6":"6.7","7":"3.0","8":"15.9","9":"8.8","10":"30","_rn_":"65"},{"1":"yes","2":"no","3":"no","4":"NA","5":"NA","6":"8.0","7":"NA","8":"20.7","9":"NA","10":"NA","_rn_":"66"},{"1":"no","2":"yes","3":"no","4":"1308","5":"3220","6":"6.7","7":"3.1","8":"18.0","9":"4.4","10":"68","_rn_":"67"},{"1":"yes","2":"no","3":"no","4":"NA","5":"18513","6":"NA","7":"NA","8":"26.5","9":"NA","10":"NA","_rn_":"68"},{"1":"yes","2":"no","3":"no","4":"NA","5":"1918","6":"NA","7":"2.5","8":"17.2","9":"0.6","10":"3","_rn_":"69"},{"1":"no","2":"yes","3":"yes","4":"5939","5":"13327","6":"3.6","7":"0.4","8":"23.4","9":"8.0","10":"99","_rn_":"70"},{"1":"no","2":"yes","3":"yes","4":"6789","5":"14290","6":"3.5","7":"0.5","8":"23.4","9":"9.3","10":"99","_rn_":"71"},{"1":"yes","2":"no","3":"no","4":"2948","5":"NA","6":"5.2","7":"NA","8":"31.2","9":"8.2","10":"NA","_rn_":"72"},{"1":"no","2":"yes","3":"yes","4":"8551","5":"16491","6":"3.2","7":"0.6","8":"26.6","9":"10.7","10":"99","_rn_":"73"},{"1":"no","2":"yes","3":"yes","4":"6527","5":"13779","6":"3.7","7":"0.7","8":"36.9","9":"11.5","10":"99","_rn_":"74"},{"1":"no","2":"yes","3":"yes","4":"7215","5":"15027","6":"3.9","7":"1.0","8":"26.2","9":"8.9","10":"99","_rn_":"75"},{"1":"no","2":"yes","3":"yes","4":"7695","5":"15297","6":"3.3","7":"0.5","8":"28.5","9":"8.4","10":"99","_rn_":"76"},{"1":"no","2":"yes","3":"yes","4":"2257","5":"6868","6":"5.1","7":"0.7","8":"29.3","9":"7.9","10":"81","_rn_":"77"},{"1":"yes","2":"no","3":"no","4":"8091","5":"NA","6":"3.9","7":"NA","8":"29.0","9":"10.2","10":"NA","_rn_":"78"},{"1":"no","2":"yes","3":"yes","4":"4411","5":"8675","6":"3.8","7":"1.1","8":"25.9","9":"11.4","10":"98","_rn_":"79"},{"1":"no","2":"yes","3":"yes","4":"4913","5":"11082","6":"3.8","7":"0.6","8":"24.9","9":"7.1","10":"91","_rn_":"80"},{"1":"yes","2":"no","3":"no","4":"9015","5":"NA","6":"2.8","7":"NA","8":"26.9","9":"5.0","10":"NA","_rn_":"81"},{"1":"yes","2":"no","3":"no","4":"2293","5":"NA","6":"6.0","7":"NA","8":"30.9","9":"7.1","10":"NA","_rn_":"82"},{"1":"no","2":"yes","3":"yes","4":"7689","5":"13177","6":"3.6","7":"1.4","8":"25.8","9":"10.7","10":"99","_rn_":"83"},{"1":"no","2":"yes","3":"yes","4":"7938","5":"19723","6":"4.3","7":"0.7","8":"29.1","9":"10.0","10":"99","_rn_":"84"},{"1":"no","2":"yes","3":"yes","4":"2272","5":"5827","6":"4.4","7":"0.6","8":"22.5","9":"5.8","10":"62","_rn_":"85"},{"1":"no","2":"yes","3":"yes","4":"3766","5":"9903","6":"4.9","7":"1.0","8":"17.7","9":"8.0","10":"87","_rn_":"86"},{"1":"no","2":"yes","3":"yes","4":"7802","5":"15237","6":"3.1","7":"0.4","8":"24.5","9":"7.9","10":"99","_rn_":"87"},{"1":"no","2":"yes","3":"yes","4":"10308","5":"15881","6":"2.5","7":"0.8","8":"29.7","9":"4.8","10":"99","_rn_":"88"},{"1":"no","2":"yes","3":"yes","4":"2274","5":"4444","6":"5.2","7":"2.5","8":"20.2","9":"5.5","10":"38","_rn_":"89"},{"1":"no","2":"yes","3":"yes","4":"7634","5":"13331","6":"2.5","7":"0.3","8":"18.4","9":"8.9","10":"99","_rn_":"90"},{"1":"yes","2":"no","3":"no","4":"3165","5":"NA","6":"4.8","7":"NA","8":"19.5","9":"12.1","10":"NA","_rn_":"91"},{"1":"no","2":"yes","3":"yes","4":"10286","5":"17935","6":"4.2","7":"2.0","8":"23.3","9":"10.6","10":"99","_rn_":"92"},{"1":"no","2":"yes","3":"no","4":"3360","5":"4492","6":"4.7","7":"3.5","8":"14.7","9":"7.0","10":"90","_rn_":"93"},{"1":"no","2":"yes","3":"no","4":"1939","5":"3308","6":"5.1","7":"2.9","8":"17.1","9":"5.8","10":"65","_rn_":"94"},{"1":"no","2":"yes","3":"no","4":"2042","5":"1997","6":"3.3","7":"3.3","8":"8.0","9":"3.9","10":"49","_rn_":"95"},{"1":"no","2":"yes","3":"no","4":"2481","5":"3034","6":"3.9","7":"3.1","8":"8.8","9":"2.4","10":"32","_rn_":"96"},{"1":"no","2":"yes","3":"no","4":"1096","5":"1237","6":"1.8","7":"1.3","8":"7.1","9":"1.9","10":"15","_rn_":"97"},{"1":"no","2":"yes","3":"no","4":"1430","5":"1822","6":"4.0","7":"3.1","8":"13.8","9":"3.7","10":"45","_rn_":"98"},{"1":"no","2":"yes","3":"no","4":"2726","5":"3080","6":"2.1","7":"1.6","8":"20.6","9":"11.2","10":"82","_rn_":"99"},{"1":"no","2":"yes","3":"no","4":"4229","5":"7380","6":"5.5","7":"3.3","8":"19.5","9":"6.6","10":"65","_rn_":"100"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
 </div>
+</div>
+<p>You can ignore package <code>rmarkdown</code> and function <code>paged_table</code>. It is used to format the output so it looks like the nice browseable table in the HTML page.</p>
+<p>This data set contains economic growth data. The format of this is a table with one country per row and economic variables in columns. You can find more info using R help:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+?GrowthDJ</code></pre>
+</div>
+<p>In this lecture we will try to determine the factors for economic growth.</p>
+<p>First let us do the summary of the dataset</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+summary(dj)</code></pre>
+<pre><code>
+  oil     inter     oecd        gdp60             gdp85      
+ yes:23   no :46   no :99   Min.   :  383.0   Min.   :  412  
+ no :98   yes:75   yes:22   1st Qu.:  973.2   1st Qu.: 1209  
+                            Median : 1962.0   Median : 3484  
+                            Mean   : 3681.8   Mean   : 5683  
+                            3rd Qu.: 4274.5   3rd Qu.: 7719  
+                            Max.   :77881.0   Max.   :25635  
+                            NA&#39;s   :5         NA&#39;s   :13     
+   gdpgrowth        popgrowth         invest          school      
+ Min.   :-0.900   Min.   :0.300   Min.   : 4.10   Min.   : 0.400  
+ 1st Qu.: 2.800   1st Qu.:1.700   1st Qu.:12.00   1st Qu.: 2.400  
+ Median : 3.900   Median :2.400   Median :17.70   Median : 4.950  
+ Mean   : 4.094   Mean   :2.279   Mean   :18.16   Mean   : 5.526  
+ 3rd Qu.: 5.300   3rd Qu.:2.900   3rd Qu.:24.10   3rd Qu.: 8.175  
+ Max.   : 9.200   Max.   :6.800   Max.   :36.90   Max.   :12.100  
+ NA&#39;s   :4        NA&#39;s   :14                      NA&#39;s   :3       
+   literacy60    
+ Min.   :  1.00  
+ 1st Qu.: 15.00  
+ Median : 39.00  
+ Mean   : 48.17  
+ 3rd Qu.: 83.50  
+ Max.   :100.00  
+ NA&#39;s   :18      </code></pre>
+</div>
+<p>Note the NAs, which mean that some of the data is missing. The most simple way of dealing with NAs is discarding them.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+ndj &lt;- na.omit(dj)
+nrow(dj) - nrow(ndj)</code></pre>
+<pre><code>
+[1] 21</code></pre>
+</div>
+<p>Compare this number with number of NAs in individual columns. Function <code>na.omit</code> removes all rows which contain at least one NA. There are 21 such rows.</p>
+<p>We can check which rows has the most NAs.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+table(apply(dj, 1, function(x)sum(is.na(x))))</code></pre>
+<pre><code>
+  0   1   2   3   5 
+100   5   2  11   3 </code></pre>
+</div>
+<p>We see that 3 countries have 5 missing values. Since we have only 6 columns which contain NA variables that is a lot of missing data for a country.</p>
+<p>Graphs are important part of exploratory data analysis</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+ggplot(aes(x = gdp60, y =gdp85), data = dj) + geom_point()</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-6-1.png" width="624" /></p>
+</div>
+<p>When we do plot only two variables are used. So only 16 countries are removed. If we had used data set <code>ndj</code> we woudl have lost 5 data points.</p>
+<p>In this graph we see a very clear outlier. Look at the individual summaries for the variables. This country has the maximum gdp both in 1960 and in 1985. But its gdp per capita has actually has shrunk. How can we identify are there any additional countries for which the gdp per capita did not grow? We can add the <span class="math inline">\(y = x\)</span> line on the graph. If all the points are above it, then we have the growth, as <span class="math inline">\(y&gt;x\)</span> means <span class="math inline">\(gdp85 &gt; gdp60\)</span>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+ggplot(aes(x = gdp60, y =gdp85), data = dj) + geom_point() + geom_abline(intercept = 0, slope = 1)</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-7-1.png" width="624" /></p>
+</div>
+<p>We can also work with the table data directly:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+dj %&gt;% filter(gdp85&lt;gdp60) %&gt;% paged_table</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["oil"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["inter"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["oecd"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["gdp60"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["gdp85"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["gdpgrowth"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["popgrowth"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["invest"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["school"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["literacy60"],"name":[10],"type":["dbl"],"align":["right"]}],"data":[{"1":"no","2":"no","3":"no","4":"1588","5":"1171","6":"0.8","7":"2.1","8":"5.8","9":"1.8","10":"5"},{"1":"no","2":"no","3":"no","4":"1116","5":"1071","6":"2.2","7":"2.4","8":"10.8","9":"1.8","10":"5"},{"1":"no","2":"no","3":"no","4":"755","5":"663","6":"1.2","7":"1.7","8":"5.1","9":"0.4","10":"14"},{"1":"no","2":"no","3":"no","4":"838","5":"789","6":"1.5","7":"1.7","8":"10.5","9":"1.4","10":"7"},{"1":"no","2":"no","3":"no","4":"908","5":"462","6":"-0.9","7":"1.9","8":"6.9","9":"0.4","10":"6"},{"1":"no","2":"no","3":"no","4":"1009","5":"727","6":"1.0","7":"2.3","8":"9.1","9":"4.7","10":"27"},{"1":"no","2":"yes","3":"no","4":"1194","5":"975","6":"1.4","7":"2.2","8":"7.1","9":"2.6","10":"50"},{"1":"no","2":"yes","3":"no","4":"737","5":"710","6":"2.1","7":"2.2","8":"7.3","9":"1.0","10":"3"},{"1":"no","2":"no","3":"no","4":"1420","5":"1035","6":"1.4","7":"2.7","8":"6.1","9":"0.7","10":"11"},{"1":"no","2":"no","3":"no","4":"901","5":"657","6":"1.8","7":"3.1","8":"13.8","9":"1.1","10":"2"},{"1":"no","2":"no","3":"no","4":"1254","5":"1038","6":"1.8","7":"2.6","8":"13.2","9":"2.0","10":"13"},{"1":"no","2":"no","3":"no","4":"594","5":"412","6":"0.9","7":"2.4","8":"6.5","9":"3.6","10":"31"},{"1":"no","2":"yes","3":"no","4":"1410","5":"1217","6":"2.1","7":"2.7","8":"31.7","9":"2.4","10":"29"},{"1":"yes","2":"no","3":"no","4":"77881","5":"25635","6":"2.4","7":"6.8","8":"9.5","9":"9.6","10":"47"},{"1":"no","2":"yes","3":"no","4":"2042","5":"1997","6":"3.3","7":"3.3","8":"8.0","9":"3.9","10":"49"},{"1":"no","2":"yes","3":"no","4":"10367","5":"6336","6":"1.9","7":"3.8","8":"11.4","9":"7.0","10":"63"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<p>As you can see there are 16 countries for which gdp per capita did not grow. The question is why? Inspecting the data in various angles can gives as some preliminary ideas</p>
+<p>If we have factor variables it is helpful to add them to graph in terms of colors, shape or size.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+ggplot(aes(x = gdp60, y =gdp85, color = oecd, size = oil, shape = inter), data = dj) + geom_point() + geom_abline(intercept = 0, slope = 1)</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-9-1.png" width="624" /></p>
+</div>
+<p>This helped us identify that our outlier is an oil producing country without the reliable data and not beloging to OECD. Note that size in this case might result in points overlapping. To supply the manual sizes use <code>scale_size_manual</code>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+ggplot(aes(x = gdp60, y =gdp85, color = oecd, size = oil, shape = inter), data = dj) + geom_point() + geom_abline(intercept = 0, slope = 1)+ scale_size_manual(values = c(&quot;yes&quot; = 2.5, &quot;no&quot; = 1))</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-10-1.png" width="624" /></p>
+</div>
+<p>It is always advisable to convert data to the log scale as this shrinks data and allows seeing more details.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+ggplot(aes(x = log(gdp60), y = log(gdp85)), data = dj) + geom_point() + geom_abline(intercept = 0, slope = 1)</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-11-1.png" width="624" /></p>
+</div>
+<p>As an exercise add all the colors to graph with the logarithms.</p>
+<p>The following graphs show a much less clear relationship between the variables</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+ggplot(aes(x = literacy60, y = gdpgrowth), data = dj) + geom_point()</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-12-1.png" width="624" /></p>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+ggplot(aes(x = invest, y = gdpgrowth), data = dj) + geom_point()</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-13-1.png" width="624" /></p>
+</div>
+<p>Another useful plot for seeing the pairwise relationships is correlation plot. Correlation measures the association between to variables. It can have values from -1 to 1. Absolute values closer to 1 indicate that variables are more associated, i.e. related.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+library(corrplot)
+corrplot(cor(ndj[,-3:-1]), method = &quot;number&quot;)</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-14-1.png" width="624" /></p>
+</div>
+<p>Correlation should confirm your intuition. If you expect variables to be associated then the correlation should be significant. All the deviations from the intuition should be inspected.</p>
+<p>As an exercise identify pairs of variables for which you think correlation should be significant but is not or vice versa and plot these variables. Can you identify why this is the case using the groupings for oecd and oil producing countries?</p>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>
@@ -1309,6 +1442,15 @@
 <div class="d-appendix">
 </div>
 
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
 
 <!--radix_placeholder_site_after_body-->
 <!--/radix_placeholder_site_after_body-->
