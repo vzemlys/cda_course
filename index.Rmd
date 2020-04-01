@@ -1,0 +1,16 @@
+---
+title: "CDA course"
+
+site: distill::distill_website
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+```
+
+
+  - [Lecture 5](lecture5.html)
+  - [Lecture 6](lecture6.html)
+  - [Lecture 7](glm.html)
+  
