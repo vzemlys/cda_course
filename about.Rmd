@@ -1,0 +1,11 @@
+---
+title: "About"
+description: CDA course
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+The code can be found [here](https://github.com/vzemlys/cda_course).
+

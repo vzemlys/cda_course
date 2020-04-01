@@ -1,16 +1,27 @@
 ---
 title: "CDA Lecture 6"
-output: html_notebook
+output: distill::distill_article
 ---
 
-Load data from Matloff example
-```{r}
-mlb <- read.table('https://raw.githubusercontent.com/matloff/fasteR/master/data/mlb.txt',header=TRUE)
+The source code of this file [here](https://github.com/vzemlys/cda_course/blob/master/lecture6.Rmd)
 
-mlb
+# Load data from Matloff example
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Save and load
+
+```{r, echo = TRUE}
+library(dplyr)
+library(rmarkdown)
+mlb <- read.table('https://raw.githubusercontent.com/matloff/fasteR/master/data/mlb.txt',header=TRUE)
+
+mlb %>% paged_table
+```
+
+# Save and load
+
 ```{r}
 library(writexl)
 library(readxl)
@@ -18,21 +29,26 @@ mlb %>% write_xlsx("MLB.xlsx")
 mlb1 <- read_xlsx("MLB.xlsx") 
 ```
 
-EDA
+# EDA
+
 ```{r}
+library(dplyr)
 mlb <- mlb %>% mutate(Height = Height*2.54, Weight = Weight*0.45359237)
 mlb
 ```
 
-Distribution of height
+# Distribution of height
+
 ```{r}
 boxplot(mlb$Height)
 ```
+
 ```{r}
-mlb$Height %>% summary
+mlb$Height %>% summary 
 ```
 
-Distribution of weight
+# Distribution of weight
+
 ```{r}
 boxplot(mlb$Weight)
 ```
@@ -41,29 +57,38 @@ boxplot(mlb$Weight)
 mlb$Weight %>% summary
 ```
 
-Who has the larget weight
+# Who has the largest weight
+
 ```{r}
 mlb %>% filter(Weight > 120)
 ```
 
+# Plot with colour
+
+## Base R
+
 ```{r}
 plot(x = mlb$Height, y = mlb$Weight, col = mlb$Position)
 ```
+
+## ggplot
 
 ```{r}
 library(ggplot2)
 ggplot(aes(x = Height, y = Weight, colour = Team), data = mlb) + geom_point()
 ```
 
+
 ```{r}
 plot(x = mlb$Height, y = mlb$Weight)
 ```
 
-Weight vs Age
+# Weight vs Age
 
 ```{r}
 plot(x = mlb$Age, y = mlb$Weight)
 ```
+
 
 ```{r}
 out <- lm(Weight~Age, data = mlb)

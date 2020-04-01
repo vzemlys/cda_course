@@ -1,14 +1,14 @@
 ---
 title: "CDA Lecture 7"
-output: html_notebook
+output: distill::distill_article
 ---
 
 To use this notebook, open it in RStudio and run the code in the blocks.
 
 Load the the data 
+
 ```{r}
 library(AER)
-
 ```
 
 

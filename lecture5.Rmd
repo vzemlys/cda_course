@@ -1,18 +1,26 @@
 ---
 title: "Lecture 5"
-output:
-  github_document
+output: distill::distill_article
 ---
+
+The source code of this file [here](https://github.com/vzemlys/cda_course/blob/master/lecture5.Rmd)
+
+# Load data from Matloff example
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy.opts = list( width.cutoff = 60))
+```
 
 Read the new Covid-19 data
 
 ```{r}
 library(tidyverse)
-dt_confirmed <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv", stringsAsFactors = FALSE)
+library(rmarkdown)
+dt_confirmed <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/archived_data/archived_time_series/time_series_19-covid-Confirmed_archived_0325.csv", stringsAsFactors = FALSE)
 
-dt_deaths <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv", stringsAsFactors = FALSE)
+dt_deaths <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/archived_data/archived_time_series/time_series_19-covid-Deaths_archived_0325.csv", stringsAsFactors = FALSE)
 
-dt_recovered <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv", stringsAsFactors = FALSE)
+dt_recovered <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/archived_data/archived_time_series/time_series_19-covid-Recovered_archived_0325.csv", stringsAsFactors = FALSE)
 
 ```
 
@@ -40,41 +48,50 @@ covid <- covid_raw %>% mutate(day = mdy(paste0(gsub("X","", day),"20")))
 
 colnames(covid) <- tolower(colnames(covid))
 colnames(covid)[1:2] <- c("region","country")
-covid
+covid %>% paged_table
 ```
 
 Aggregate by country
 
 ```{r}
 covid_country <- covid %>% select(-lat, -long, -region) %>% group_by(country, day) %>% summarise_all(sum) %>% ungroup %>% arrange(country,day)
-covid_country
+covid_country %>% paged_table
 ```
 
 Calculate absolute growths and percentage growths
+
 ```{r}
 growth <- function(x) c(NA, diff(x)/x[-length(x)])
 agrowth <- function(x)c(NA, diff(x))
 
 covid_country <- covid_country %>% group_by(country) %>% mutate_at(c("confirmed", "deaths", "recovered"), list(diff = agrowth, growth = growth))
-covid_country
+covid_country %>% paged_table
 ```
 
 
-Plot all of the countries
+Select sample of the countries
+
 ```{r}
-ggplot(aes(x = day, y = confirmed, colour = country), data = covid_country) + geom_line()
+cn <- covid_country$country %>% unique
+cns <- sample(cn, 10)
+cns
+```
+
+```{r}
+ggplot(aes(x = day, y = confirmed, colour = country), data = covid_country %>% filter(country %in% cns)) + geom_line()
 ```
 
 
 Plot all of the countries one by one
+
 ```{r}
-ggplot(aes(x = day, y = confirmed), data = covid_country) + geom_line() + facet_wrap(~country, scales="free_y")
+ggplot(aes(x = day, y = confirmed), data = covid_country %>% filter(country %in% cns)) + geom_line() + facet_wrap(~country, scales="free_y")
 ```
 
 Select only countries with  10 cases in the last 7 days
 
 ```{r}
-day7 <- covid_country %>% filter(day <= max(day) & day > max(day) - 7) %>% group_by(country) %>% summarize(max_cases = max(confirmed_diff)) %>% filter( max_cases > 10)
+day7 <- covid_country %>% filter(day <= max(day) & day > max(day) - 7) %>% group_by(country) %>% summarize(max_cases = max(confirmed_diff)) %>% filter( max_cases > 1000)
 day7 %>% arrange(-max_cases)
 ```
 
@@ -92,6 +109,7 @@ ggplot(aes(x = day, y = deaths_diff), data = covid_country %>% filter(country %i
 ```
 
 Inspect death percentage variation
+
 ```{r}
 pdeath <- covid_country %>% mutate(pdeath = deaths/confirmed) %>% filter(pdeath > 0) %>% 
     select(country, day, deaths, confirmed, pdeath) 
@@ -107,6 +125,7 @@ pdeath1
 
 
 Explore distribution
+
 ```{r}
 par(mfrow = c(1, 2))
 hist(pdeath1$pdeath)
@@ -115,11 +134,13 @@ boxplot(pdeath1$pdeath)
 
 
 Inspect outliers
+
 ```{r}
 pdeath1 %>% filter(pdeath>0.1)
 ```
 
 On which days it has occured?
+
 ```{r}
 pdeath %>% filter(pdeath>0.2)
 ```
@@ -134,9 +155,12 @@ boxplot(pdeath2$pdeath)
 ```
 
 Do a scatter plot
+
 ```{r}
 ggplot(aes(x = confirmed, y = deaths), data = pdeath2) + geom_point() + geom_smooth(method="lm")
 ```
+
+Example of the not a very useful plot
 
 ```{r}
 ggplot(aes(x = log(confirmed), y = log(deaths)), data = pdeath2) + geom_point(aes(colour=country)) 
