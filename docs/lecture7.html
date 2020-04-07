@@ -1435,6 +1435,237 @@ corrplot(cor(ndj[,-3:-1]), method = &quot;number&quot;)</code></pre>
 </div>
 <p>Correlation should confirm your intuition. If you expect variables to be associated then the correlation should be significant. All the deviations from the intuition should be inspected.</p>
 <p>As an exercise identify pairs of variables for which you think correlation should be significant but is not or vice versa and plot these variables. Can you identify why this is the case using the groupings for oecd and oil producing countries?</p>
+<p>Exploratory data analysis is useful for familiarising with data. It can be done without any clear goal in mind, but it is more useful when it is done with purpose. Usually data analysis projects have clear goals, such as forecast certain variable 10 steps ahead or determine the drivers of certain phenomena.</p>
+<p>Let us set the goal to determine the growth drivers for the countries based on the data set. What country should strive to do to have higher economic growth? Such type of quantifiable questions are best answered by linear regression.</p>
+<p>First let us define how we will measuer the economic growth. The usual measure is the percentage growth, which can be aproximated by taking the log difference.</p>
+<p>The most simple model is when we have only two variables. To specify the model in R we use so called formula interface. The <code>~</code> means that we specify the relationship. The variable which we want to model is then specified on the left hand side of <code>~</code>. This variable is called the dependent variable. The variables on the right hand side of <code>~</code> are called explanatory or independent variables. These are the variables with which we want to explain the dependent variable.</p>
+<p>Practically all statistical models can be expressed with such formulas. If statistical model is implemented in R the convention is to use the formula interface to specify it.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+dj &lt;- dj %&gt;% mutate(growth = log(gdp85) - log(gdp60))
+
+formula(growth ~ gdpgrowth)</code></pre>
+<pre><code>
+growth ~ gdpgrowth</code></pre>
+</div>
+<p>Now we can estimate this simple model.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+mod &lt;- lm(growth ~ gdpgrowth, data = dj)
+mod</code></pre>
+<pre><code>
+Call:
+lm(formula = growth ~ gdpgrowth, data = dj)
+
+Coefficients:
+(Intercept)    gdpgrowth  
+    -0.4339       0.2175  </code></pre>
+</div>
+<p>Note that the variables in the formula need to correspond to column names in the data. Although R allows not to specify data in the model, this should be discouraged, i.e. always specifiy the dataset on which the model is estimated.</p>
+<p>Each model in R has predefined functions for extracting useful information about the model. The first is the <code>summary</code></p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+summary(mod)</code></pre>
+<pre><code>
+Call:
+lm(formula = growth ~ gdpgrowth, data = dj)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.19942 -0.12276 -0.04491  0.10840  0.45900 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) -0.43391    0.05713  -7.596 1.45e-11 ***
+gdpgrowth    0.21754    0.01278  17.016  &lt; 2e-16 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 0.245 on 103 degrees of freedom
+  (16 observations deleted due to missingness)
+Multiple R-squared:  0.7376,    Adjusted R-squared:  0.7351 
+F-statistic: 289.5 on 1 and 103 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+<p>As you can see modell coefficients are significant (note the 3 stars). R-squared is 0.735 indicates that fit is quite good.</p>
+<p>Note that 16 observations were deleted, since either <code>gdpgrowth</code> or <code>growth</code> had NA values. To see which variables were removed you can look at the model output. In R all the model output is put in to a list object.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+names(mod)</code></pre>
+<pre><code>
+ [1] &quot;coefficients&quot;  &quot;residuals&quot;     &quot;effects&quot;       &quot;rank&quot;         
+ [5] &quot;fitted.values&quot; &quot;assign&quot;        &quot;qr&quot;            &quot;df.residual&quot;  
+ [9] &quot;na.action&quot;     &quot;xlevels&quot;       &quot;call&quot;          &quot;terms&quot;        
+[13] &quot;model&quot;        </code></pre>
+</div>
+<p>What does each element contains you can find out in the documentation <code>?lm</code>. In this case we need the <code>na.action</code> element:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+mod$na.action</code></pre>
+<pre><code>
+ 14  36  44  45  59  66  68  69  72  78  81  82  91 111 114 118 
+ 14  36  44  45  59  66  68  69  72  78  81  82  91 111 114 118 
+attr(,&quot;class&quot;)
+[1] &quot;omit&quot;</code></pre>
+</div>
+<p>We can see which rows where removed:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+dj[mod$na.action, c(&quot;growth&quot;, &quot;gdpgrowth&quot;)]</code></pre>
+<pre><code>
+    growth gdpgrowth
+14      NA       3.6
+36      NA       7.2
+44      NA       1.6
+45      NA        NA
+59      NA        NA
+66      NA       8.0
+68      NA        NA
+69      NA        NA
+72      NA       5.2
+78      NA       3.9
+81      NA       2.8
+82      NA       6.0
+91      NA       4.8
+111     NA       1.1
+114     NA       4.5
+118     NA       4.2</code></pre>
+</div>
+<p>We can see that all the values of <code>growth</code> were NA.</p>
+<p>From the summary we saw the statistics related to the fitted model. It is always nice to see the actual fit of the model. To get the we can either use function <code>fitted</code> or <code>predict</code>. Without any arguments they both provide the fitted values of the model.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+fitted(mod)</code></pre>
+<pre><code>
+          1           2           3           4           5 
+ 0.61030735 -0.25987186  0.04469086  1.43697759  0.19697222 
+          6           7           8           9          10 
+-0.17285394  0.80609767 -0.10759050 -0.62969802  0.91487007 
+         11          12          13          15          16 
+ 0.87136111  0.17521774  1.08890591 -0.21636290  0.04469086 
+         17          18          19          20          21 
+ 0.67557079  0.61030735  1.04539695  0.28399014 -0.12934498 
+         22          23          24          25          26 
+ 0.61030735  0.02293638  0.28399014  0.47978047  0.82785215 
+         27          28          29          30          31 
+-0.12934498  0.52328943  0.17521774  0.54504391  0.10995430 
+         32          33          34          35          37 
+ 0.30574462 -0.04232706  0.41451703 -0.04232706  0.71907975 
+         38          39          40          41          42 
+ 0.30574462  0.78434319  0.32749910 -0.23811738  0.02293638 
+         43          46          47          48          49 
+ 0.67557079  0.43627151  0.54504391  1.50224103  0.34925358 
+         50          51          52          53          54 
+ 0.93662455  0.39276255  0.84960663  1.04539695  0.74083423 
+         55          56          57          58          60 
+ 1.28469623  0.08819982  1.11066039  0.13170878  0.82785215 
+         61          62          63          64          65 
+ 0.54504391  0.89311559  1.56750447  0.37100807  1.02364247 
+         67          70          71          73          74 
+ 1.02364247  0.34925358  0.32749910  0.26223566  0.37100807 
+         75          76          77          79          80 
+ 0.41451703  0.28399014  0.67557079  0.39276255  0.39276255 
+         83          84          85          86          87 
+ 0.34925358  0.50153495  0.52328943  0.63206183  0.24048118 
+         88          89          90          92          93 
+ 0.10995430  0.69732527  0.10995430  0.47978047  0.58855287 
+         94          95          96          97          98 
+ 0.67557079  0.28399014  0.41451703 -0.04232706  0.43627151 
+         99         100         101         102         103 
+ 0.02293638  0.76258871  0.45802599  0.84960663  0.15346326 
+        104         105         106         107         108 
+ 0.26223566  0.02293638  0.28399014  1.15416935  0.13170878 
+        109         110         112         113         115 
+ 0.65381631  0.80609767  0.76258871  0.32749910 -0.23811738 
+ [ reached getOption(&quot;max.print&quot;) -- omitted 5 entries ]</code></pre>
+</div>
+<p>However since the data had NA values the number of fitted values is less than the rows of the original data:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+length(fitted(mod)) - nrow(dj)</code></pre>
+<pre><code>
+[1] -16</code></pre>
+</div>
+<p>There are several ways to see which fitted values correspond to actual values.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+fit &lt;- data.frame(fitted = fitted(mod), residuals = residuals(mod), growth1 = dj[-mod$na.action, &quot;growth&quot;], growth2 = mod$model[,1], growth3 = fitted(mod) + residuals(mod)) 
+fit</code></pre>
+<pre><code>
+        fitted    residuals     growth1     growth2     growth3
+1   0.61030735 -0.045588191  0.56471916  0.56471916  0.56471916
+2  -0.25987186 -0.044745419 -0.30461728 -0.30461728 -0.30461728
+3   0.04469086 -0.085848935 -0.04115807 -0.04115807 -0.04115807
+4   1.43697759 -0.094649284  1.34232831  1.34232831  1.34232831
+5   0.19697222  0.285477263  0.48244949  0.48244949  0.48244949
+6  -0.17285394  0.042911180 -0.12994276 -0.12994276 -0.12994276
+7   0.80609767  0.095461919  0.90155959  0.90155959  0.90155959
+8  -0.10759050  0.047338719 -0.06025178 -0.06025178 -0.06025178
+9  -0.62969802 -0.045981465 -0.67567949 -0.67567949 -0.67567949
+10  0.91487007  0.040870061  0.95574013  0.95574013  0.95574013
+11  0.87136111 -0.003640058  0.86772105  0.86772105  0.86772105
+12  0.17521774 -0.043564286  0.13165346  0.13165346  0.13165346
+13  1.08890591  0.320456216  1.40936213  1.40936213  1.40936213
+15 -0.21636290 -0.111425644 -0.32778854 -0.32778854 -0.32778854
+16  0.04469086  0.107926662  0.15261753  0.15261753  0.15261753
+17  0.67557079 -0.469014260  0.20655653  0.20655653  0.20655653
+18  0.61030735 -0.268251454  0.34205589  0.34205589  0.34205589
+19  1.04539695  0.190317302  1.23571425  1.23571425  1.23571425
+20  0.28399014 -0.194278669  0.08971148  0.08971148  0.08971148
+21 -0.12934498 -0.073281844 -0.20262682 -0.20262682 -0.20262682
+ [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 85 rows ]</code></pre>
+</div>
+<p>We used three ways:</p>
+<ol type="1">
+<li>We picked the variable from the original table by removing the rows which were removed by the model.</li>
+<li>Each model outputs the actual model used in the element model. The first column contains the dependent variable.</li>
+<li>The model residuals are calculated by subtracting fitted values from the actual values. We reverse it by adding residuals to fitted values to get the actual values.</li>
+</ol>
+<p>Let us check that the three variables are the same:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+quantile(apply(fit[, c(&quot;growth1&quot;, &quot;growth2&quot;,&quot;growth3&quot;)] - fit$growth1, 1, function(x)sum(abs(x))))</code></pre>
+<pre><code>
+          0%          25%          50%          75%         100% 
+0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00 1.110223e-16 </code></pre>
+</div>
+<p>Why does this show that they are the same? Can you answer this?</p>
+<p>Now let us see how does our fitted values look like:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+ggplot(aes(x = fitted, y = growth1), data = fit) + geom_point() + geom_abline(intercept = 0, slope = 1)</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-25-1.png" width="624" /></p>
+</div>
+<p>If the fit would be ideal actual values would be equal to predicted values. That is why we added the straight line <code>y=x</code>. As we see the fitted values are centered around the fit.</p>
+<p>Another useful plot is plotting the residuals vs actual values, to see how the model performed</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+ggplot(aes(x = growth1, y = residuals), data = fit) + geom_point() + geom_hline(yintercept = 0)</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-26-1.png" width="624" /></p>
+</div>
+<p>The model <code>lm</code> estimates linear relationship. If we have two variables this means that we model the dependent varialbe with the formula <span class="math inline">\(y = a + b x\)</span>, where <span class="math inline">\(y\)</span> is the dependent variable and <span class="math inline">\(x\)</span> is the explanatory. The coefficient <span class="math inline">\(a\)</span> is called intercept and <span class="math inline">\(b\)</span> is the slope.</p>
+<p>To see the estimated relationship we need to add the fitted values to the original data set:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+dj1 &lt;- dj %&gt;% mutate(fitted = NA)
+dj1$fitted[-mod$na.action] &lt;- fitted(mod)
+ggplot(aes(x = gdpgrowth, y = growth), data =dj1) + geom_point() + geom_line(aes(x = gdpgrowth, y = fitted))</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-27-1.png" width="624" /></p>
+</div>
+<p>As you can see due to missing values the line has intteruptions. To deal with that we can simply predict the values of the model for any given value of gdpgrowht.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+fit1 &lt;- data.frame(gdpgrowth = seq(-1, 10, by = 0.1)) 
+fit1$fitted &lt;- predict(mod, fit1)
+ggplot(aes(x = gdpgrowth, y = growth), data =dj1) + geom_point() + geom_line(aes(x = gdpgrowth, y = fitted), data = fit1)</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-28-1.png" width="624" /></p>
+</div>
+<p>Note for the two variable linear regression <code>ggplot2</code> library has the special function to estimate the model and plot the result:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+ggplot(aes(x = gdpgrowth, y = growth), data =dj1) + geom_point()  + geom_smooth(method = &quot;lm&quot;)</code></pre>
+<p><img src="lecture7_files/figure-html5/unnamed-chunk-29-1.png" width="624" /></p>
+</div>
+<p>Estimate all the two-paired relationships and plot the resulting fit. See whether you spot relationship of the goodnes of fit with the correlation coefficients you have calculated earlier.</p>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>

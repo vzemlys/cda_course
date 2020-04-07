@@ -119,3 +119,129 @@ corrplot(cor(ndj[,-3:-1]), method = "number")
 Correlation should confirm your intuition. If you expect variables to be associated then the correlation should be significant. All the deviations from the intuition should be inspected. 
 
 As an exercise identify pairs of variables for which you think correlation should be significant but is not or vice versa and plot these variables. Can you identify why this is the case using the groupings for oecd and oil producing countries?
+
+Exploratory data analysis is useful for familiarising with data. It can be done without any clear goal in mind, but it is more useful when it is done with purpose. Usually data analysis projects have clear goals, such as forecast certain variable 10 steps ahead or determine the drivers of certain phenomena. 
+
+Let us set the goal to determine the growth drivers for the countries based on the data set. What country should strive to do to have higher economic growth? Such type of quantifiable questions are best answered by linear regression.
+
+First let us define how we will measuer the economic growth. The usual measure is the percentage growth, which can be aproximated by taking the log difference. 
+
+The most simple model is when we have only two variables. To specify the model in R we use so called formula interface. The `~` means that we specify the relationship. The variable which we want to model is then specified on the left hand side of `~`. This variable is called the dependent variable. The variables on the right hand side of `~` are called explanatory or independent variables. These are the variables with which we want to explain the dependent variable.
+
+Practically all statistical models can be expressed with such formulas. If statistical model is implemented in R the convention is to use the formula interface to specify it.
+
+```{r}
+dj <- dj %>% mutate(growth = log(gdp85) - log(gdp60))
+
+formula(growth ~ gdpgrowth)
+```
+
+Now we can estimate this simple model.
+
+```{r}
+mod <- lm(growth ~ gdpgrowth, data = dj)
+mod
+```
+
+Note that the variables in the formula need to correspond to column names in the data. Although R allows not to specify data in the model, this should be discouraged, i.e. always specifiy the dataset on which the model is estimated.
+
+Each model in R has predefined functions for extracting useful information about the model. The first is the `summary` 
+
+```{r}
+summary(mod)
+```
+
+As you can see modell coefficients are significant (note the 3 stars). R-squared is 0.735 indicates that fit is quite good. 
+
+Note that 16 observations were deleted, since either `gdpgrowth` or `growth` had NA values. To see which variables were removed you can look at the model output. In R all the model output is put in to a list object.
+
+```{r}
+names(mod)
+```
+
+What does each element contains you can find out in the documentation `?lm`. In this case we need the `na.action` element:
+
+```{r}
+mod$na.action
+```
+
+We can see which rows where removed:
+
+```{r}
+dj[mod$na.action, c("growth", "gdpgrowth")]
+```
+
+We can see that all the values of `growth` were NA.
+
+From the summary we saw the statistics related to the fitted model. It is always nice to see the actual fit of the model. To get the we can either use function `fitted` or `predict`. Without any arguments they both provide the fitted values of the model.
+
+```{r}
+fitted(mod)
+```
+
+However since the data had NA values the number of fitted values is less than  the rows of the original data:
+
+```{r}
+length(fitted(mod)) - nrow(dj)
+```
+
+There are several ways to see which fitted values correspond to actual values.
+
+```{r}
+fit <- data.frame(fitted = fitted(mod), residuals = residuals(mod), growth1 = dj[-mod$na.action, "growth"], growth2 = mod$model[,1], growth3 = fitted(mod) + residuals(mod)) 
+fit
+```
+
+We used three ways:
+
+  1. We picked the variable from the original table by removing the rows which were removed by the model.
+  2. Each model outputs the actual model used in the element model. The first column contains the dependent variable.
+  3. The model residuals are calculated by subtracting fitted values from the actual values. We reverse it by adding residuals to fitted values to get the actual values.
+  
+Let us check that the three variables are the same: 
+
+```{r}
+quantile(apply(fit[, c("growth1", "growth2","growth3")] - fit$growth1, 1, function(x)sum(abs(x))))
+```
+
+Why does this show that they are the same? Can you answer this?
+
+Now let us see how does our fitted values look like:
+
+```{r}
+ggplot(aes(x = fitted, y = growth1), data = fit) + geom_point() + geom_abline(intercept = 0, slope = 1)
+```
+
+If the fit would be ideal actual values would be equal to predicted values. That is why we added the straight line `y=x`. As we see the fitted values are centered around the fit. 
+
+Another useful plot is plotting the residuals vs actual values, to see how the model performed
+
+```{r}
+ggplot(aes(x = growth1, y = residuals), data = fit) + geom_point() + geom_hline(yintercept = 0)
+```
+
+The model `lm` estimates linear relationship. If we have two variables this means that we model the dependent varialbe with the formula $y = a + b x$, where $y$ is the dependent variable and $x$ is the explanatory. The coefficient $a$ is called intercept and $b$ is the slope. 
+
+To see the estimated relationship we need to add the fitted values to the original data set:
+
+```{r}
+dj1 <- dj %>% mutate(fitted = NA)
+dj1$fitted[-mod$na.action] <- fitted(mod)
+ggplot(aes(x = gdpgrowth, y = growth), data =dj1) + geom_point() + geom_line(aes(x = gdpgrowth, y = fitted))
+```
+
+As you can see due to missing values the line has intteruptions. To deal with that we can simply predict the values of the model for any given value of gdpgrowht.
+
+```{r}
+fit1 <- data.frame(gdpgrowth = seq(-1, 10, by = 0.1)) 
+fit1$fitted <- predict(mod, fit1)
+ggplot(aes(x = gdpgrowth, y = growth), data =dj1) + geom_point() + geom_line(aes(x = gdpgrowth, y = fitted), data = fit1)
+```
+
+Note for the two variable linear regression `ggplot2` library has the special function to estimate the model and plot the result:
+
+```{r}
+ggplot(aes(x = gdpgrowth, y = growth), data =dj1) + geom_point()  + geom_smooth(method = "lm")
+```
+
+Estimate all the two-paired relationships and plot the resulting fit. See whether you spot relationship of the goodnes of fit with the correlation coefficients you have calculated earlier.
