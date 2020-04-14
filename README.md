@@ -1,6 +1,8 @@
 # Computing and Data Analysis course
 
-This is a lecture notes repository for the Computing and Data Analysis course taught for 2nd year Quantative Economics students. 
+This is a lecture notes repository for the Computing and Data Analysis course taught for 2nd year Quantative Economics students.
+
+The lecture notes are organizes into a [website](http://vzemlys.github.io/cda_course)
 
 Main course materials are the following:
 
