@@ -13,4 +13,4 @@ knitr::opts_chunk$set(echo = TRUE)
   - [Lecture 5](lecture5.html)
   - [Lecture 6](lecture6.html)
   - [Lecture 7](lecture7.html)
-  
+  - [Lecture 8](lecture8.html)
