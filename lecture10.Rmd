@@ -1,0 +1,70 @@
+---
+title: "CDA Lecture 10"
+output: distill::distill_article
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+To use this notebook, open [it](https://github.com/vzemlys/cda_course/blob/master/lecture8.Rmd) in RStudio and run the code in the blocks.
+
+The purpose of this lecture is to become acquainted with certain features of linear regression 
+
+We will use the same dataset from the lecture 7-8
+
+
+```{r, message=FALSE}
+library(AER)
+library(rmarkdown)
+library(dplyr)
+library(ggplot2)
+data("GrowthDJ")
+dj <- GrowthDJ
+dj <- dj %>% mutate(growth = 100*(log(gdp85) - log(gdp60))/25)
+dj %>% paged_table
+```
+
+
+```{r}
+library(sjPlot)
+set.seed(1313)
+
+train <- sample(1:121,round(.8*121), replace = FALSE)
+test <- (1:121)[-train]
+
+mod2 <- lm(growth ~ popgrowth + invest + school + literacy60, data = dj[train, ])
+mod3 <- lm(growth ~ gdp60+popgrowth + invest + school + literacy60, data = dj[train, ])
+mod4 <- lm(growth ~ log(gdp60)+popgrowth + invest + school + literacy60, data = dj[train, ])
+mod5 <- lm(growth ~ log(gdp60)*oecd + popgrowth + invest + school+ literacy60, data = dj[train, ])
+
+
+tab_model(mod2, mod3, mod4, mod5, p.style = "asterisk", show.ci = FALSE)
+```
+
+```{r}
+pred <- lapply(list(mod2, mod3, mod4, mod5), predict, newdata = dj[test, ]) %>% bind_cols
+colnames(pred) <- paste0("pred",2:5)
+
+res <- bind_cols(data.frame(growth = dj[test, "growth"]), pred)
+res
+```
+
+```{r}
+ggplot(aes(x = growth, y = pred3), data = res) + geom_point()+geom_abline(intercept = 0, slope = 1)
+```
+
+
+```{r}
+rmse <- function(x, y) sqrt(mean((x-y)^2, na.rm = TRUE))
+mae <- function(x, y) mean(abs(x - y), na.rm =TRUE)
+
+data.frame(rmse = sapply(pred, function(pp)rmse(res$growth, pp)),
+           mae = sapply(pred, function(pp)mae(res$growth, pp)))
+
+```
+
+```{r}
+data.frame(rmse = sapply(list(mod2, mod3, mod4, mod5), function(l)rmse(l$model[,1], fitted(l))),
+           
+           mae = sapply(list(mod2, mod3, mod4, mod5), function(l)mae(l$model[,1], fitted(l))))
+```
