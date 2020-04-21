@@ -6,7 +6,7 @@ output: distill::distill_article
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-To use this notebook, open [it](https://github.com/vzemlys/cda_course/blob/master/lecture8.Rmd) in RStudio and run the code in the blocks.
+To use this notebook, open [it](https://github.com/vzemlys/cda_course/blob/master/lecture10.Rmd) in RStudio and run the code in the blocks.
 
 The purpose of this lecture is to become acquainted with certain features of linear regression 
 

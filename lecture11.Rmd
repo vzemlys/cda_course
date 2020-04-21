@@ -1,0 +1,178 @@
+---
+title: "CDA Lecture 11"
+output: distill::distill_article
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+To use this notebook, open [it](https://github.com/vzemlys/cda_course/blob/master/lecture11.Rmd) in RStudio and run the code in the blocks.
+
+The purpose of this lecture is to become acquainted with certain features of classification regression.
+
+```{r}
+library(AER)
+library(dplyr)
+library(lubridate)
+library(rmarkdown)
+library(ggplot2)
+data("Affairs")
+af <- Affairs
+af %>% paged_table
+```
+
+```{r}
+summary(af)
+```
+
+```{r}
+ggplot(aes(x=age, y=affairs), data = af) + geom_point()
+```
+
+```{r}
+xtabs(~affairs+gender, data=af)
+```
+
+```{r}
+xtabs(~affairs+age, data=af)
+```
+
+```{r}
+tb <- xtabs(~affairs+age, data=af)
+round(100*tb/sum(tb),2)
+```
+
+```{r}
+af <- af %>% mutate(affairs0 = affairs, affairs = ifelse(affairs0 == 0, 0, 1))
+```
+
+```{r}
+tb <- xtabs(~affairs + age, data = af)
+round(100*tb/sum(tb), 2)
+```
+
+
+```{r}
+tb1 <- xtabs(~affairs + yearsmarried, data = af)
+tb1
+```
+
+
+```{r}
+tba <- af %>% group_by(affairs, yearsmarried) %>% summarize(n = n())
+tba %>% paged_table
+```
+
+```{r}
+ggplot(aes(x = yearsmarried, y =n, group = affairs), data = tba) + geom_col(aes(fill = affairs), position = "dodge",orientation = "x")
+```
+
+
+```{r}
+ggplot(aes(x = factor(yearsmarried), y =n, group = factor(affairs)), data = tba) + geom_col(aes(fill = factor(affairs)), position = "dodge",orientation = "x") + 
+    scale_fill_manual(values=c("0" = "#31a354", "1" = "#de2d26"))
+```
+
+
+```{r}
+ggplot(aes(x = factor(yearsmarried), y =n, group = factor(affairs)), data = tba) + geom_col(aes(fill = factor(affairs)), position = "dodge",orientation = "x") 
+```
+
+
+```{r}
+cbind(data.frame(colour_name = colors()),t(col2rgb(colors()))) %>% paged_table
+```
+
+
+[Here](http://www.sthda.com/english/wiki/colors-in-r) you can find more information how R treats colours.
+
+```{r}
+xtabs(~affairs+education, data = af)
+```
+
+```{r}
+a <- xtabs(~affairs+education, data = af)
+sweep(a, 2, apply(a,2,sum), "/")
+```
+
+
+```{r}
+tba1 <- af %>% group_by(affairs, education) %>% summarize(n = n()) %>% ungroup %>% 
+    group_by(education) %>% mutate(p = n/sum(n))
+tba1 %>% paged_table
+```
+
+```{r}
+ggplot(aes(x = factor(education), y =p, group = factor(affairs)), data = tba1) + geom_col(aes(fill = factor(affairs)),orientation = "x") 
+```
+
+
+```{r}
+mod_logit <- glm(affairs ~ age + yearsmarried + religiousness + occupation + rating,
+  data = af, family = binomial(link = "logit"))
+summary(mod_logit)
+```
+
+
+```{r}
+mod_lm <- lm(affairs0 ~ age + yearsmarried + religiousness + occupation + rating,
+  data = af)
+summary(mod_lm)
+```
+
+```{r}
+res <- data.frame(y = mod_lm$model[,1], fit = fitted(mod_lm),res = residuals(mod_lm))
+ggplot(aes(x=fit, y = y), data=res) + geom_point()
+```
+
+
+```{r}
+summary(mod_logit)
+```
+
+```{r}
+res_logit <- data.frame(y = mod_logit$model[,1], fit_prob = fitted(mod_logit)) %>% mutate( fit = ifelse(fit_prob > 0.5, 1, 0))
+res_logit %>% paged_table
+```
+
+```{r}
+tb <- xtabs(~I(1-fit) + I(1-y), data = res_logit)
+tb
+```
+
+
+```{r}
+pra <- function(tb) {
+    c(tb[1,1]/(tb[1,1]+tb[1,2]), tb[1,1]/(tb[1,1]+tb[2,1]), (tb[1,1]+tb[2,2])/sum(tb))
+}
+pra(tb)
+```
+
+
+```{r}
+modtb <- data.frame(y = mod_logit$model[,1], fit_prob = fitted(mod_logit)) 
+
+prat <- function(thres, mod) {
+    res <- mod %>% mutate(fit = ifelse(fit_prob> thres, 1, 0))
+    tb <-  xtabs(~I(1-fit) + I(1-y), data = res)
+    if(nrow(tb) == 1) {
+        if(rownames(tb)[1] == "0") tb <- rbind(tb, c(0,0))
+        else tb <- rbind(c(0,0),tb)
+    }
+    pra(tb)
+}
+
+prat(0.5, modtb)
+```
+
+
+```{r}
+out <- t(sapply(seq(0, 1, length.out = 101), prat, mod = modtb))
+colnames(out) <- c("precision", "recall", "accuracy")
+out <- data.frame(out, stringsAsFactors = FALSE)
+out %>% paged_table
+```
+
+```{r}
+ggplot(aes(x=recall, y= precision), data =out) +geom_line()
+```
