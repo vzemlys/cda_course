@@ -1,0 +1,124 @@
+---
+title: "Lecture 10"
+output: html_notebook
+---
+
+
+```{r}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(dygraphs)
+library(zoo)
+library(xts)
+library(midasr)
+library(lmtest)
+lv1 <- read.csv("https://raw.githubusercontent.com/mpiktas/covid19lt/master/data/lt-covid19-country.csv") %>% mutate(day = ymd(day))
+```
+
+```{r}
+ct <- lv1 %>% select(day, confirmed_daily, tests_daily) %>% 
+    mutate(cc = log(confirmed_daily)-lag(log(confirmed_daily)), tt = log(tests_daily)-lag(log(tests_daily)))
+```
+
+
+```{r}
+ggplot(aes(x = day, y = confirmed_daily), data =ct) + geom_line()+theme_bw()
+```
+```{r}
+ggplot(aes(x = day, y =tests_daily), data =ct) + geom_line()+theme_bw()
+```
+
+```{r}
+ggplot(aes(x = day, y =cc), data =ct) + geom_line()+theme_bw()+geom_line(aes(y = tt), colour="red")
+```
+```{r}
+ctx <- xts(ct %>% select(cc, tt), order.by=ct$day)
+
+```
+
+```{r}
+plot(ctx["2020-10-01/2020-11-01"])
+```
+
+```{r}
+dygraph(ctx) %>% dyRangeSelector() %>% dyOptions(colors = RColorBrewer::brewer.pal(3, "Set1")[c(1,2)])
+```
+
+```{r}
+ctw <- ct %>% group_by(week = floor_date(day, unit = "week", week_start = 1)) %>% 
+    summarise(confirmed_daily = sum(confirmed_daily), tests_daily = sum(tests_daily)) %>% 
+    mutate(cc = log(confirmed_daily)-lag(log(confirmed_daily)), tt = log(tests_daily)-lag(log(tests_daily)))
+
+ctwx <- xts(ctw %>% select(cc, tt), order.by=ctw$week)
+```
+
+```{r}
+dygraph(ctwx) %>% dyRangeSelector() %>% dyOptions(colors = RColorBrewer::brewer.pal(3, "Set1")[c(1,2)])
+```
+
+```{r}
+midas_u(cc~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx) %>% summary
+```
+
+```{r}
+midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx) %>% summary
+```
+
+```{r}
+midas_u(cc~mls(cc,1:2,1), data= ctwx) %>% summary
+```
+
+## Granger causality for all the waves
+
+```{r}
+waldtest(midas_u(cc~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx), midas_u(cc~mls(cc,1:2,1), data= ctwx), test = "Chisq")
+```
+
+
+```{r}
+waldtest(midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx), midas_u(tt~mls(tt,1:2,1), data= ctwx), test = "Chisq")
+```
+
+```{r}
+midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx)
+```
+
+```{r}
+midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx) %>% residuals %>% plot
+```
+
+
+```{r}
+midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx) %>% residuals %>% Box.test(lag=4)
+```
+
+```{r}
+midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx) %>% residuals %>% acf %>% plot
+```
+
+## Do the same for the second and third wave
+```{r}
+waldtest(midas_u(cc~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx["2020-10-01/"]), midas_u(cc~mls(cc,1:2,1), data= ctwx["2020-10-01/"]), vcov= vcovHC(midas_u(cc~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx["2020-10-01/"])), test = "Chisq")
+```
+
+
+```{r}
+waldtest(midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx["2020-10-01/"]), midas_u(tt~mls(tt,1:2,1), data= ctwx["2020-10-01/"]), vcov=vcovHC(midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx["2020-10-01/"])),test = "Chisq")
+```
+
+```{r}
+midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx["2020-10-01/"]) %>% residuals %>% plot
+```
+
+
+```{r}
+midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx["2020-10-01/"]) %>% residuals %>% Box.test(lag=4)
+```
+
+```{r}
+midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx["2020-10-01/"]) %>% residuals %>% acf %>% plot
+```
+```{r}
+midas_u(tt~mls(cc,1:2,1)+mls(tt, 1:2,1), data= ctwx["2020-10-01/"])  %>% summary
+```

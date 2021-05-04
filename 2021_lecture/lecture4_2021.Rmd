@@ -1,0 +1,155 @@
+---
+title: "Lecture 4, 2021"
+output:
+  html_document:
+    df_print: paged
+---
+
+Various ways of calculating growth
+
+```{r, echo = FALSE, message=FALSE, include=FALSE}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(DT)
+library(zoo)
+lv3 <- read.csv("https://raw.githubusercontent.com/mpiktas/covid19lt/master/data/lt-covid19-level3.csv") %>% mutate(day = ymd(day))
+Sys.setlocale(locale = "lt_LT.UTF-8")
+```
+
+```{r}
+v1 <- lv3[lv3$administrative_level_3 == "Vilniaus m.",]
+vilnius <- lv3 %>% filter(administrative_level_3 == "Vilniaus m.")
+vilnius 
+```
+
+```{r}
+res <- rep(NA, ncol(v1))
+identical(colnames(v1),colnames(vilnius))
+coln <- colnames(v1)
+
+for(i in 1:ncol(v1)) {
+    res[i] <- identical(v1[,coln[i]], vilnius[, coln[i]])
+}
+```
+
+```{r}
+vilnius1 <- vilnius %>% select(day, confirmed_daily)
+vilnius1 <- vilnius1 %>% mutate(g1 = round(100*(confirmed_daily/lag(confirmed_daily, 1) - 1), 2), 
+                                g7 = round(100*(confirmed_daily/lag(confirmed_daily, 7) - 1), 2), 
+                                weekday = weekdays(day))
+
+vilnius1  %>% filter(weekday == "Sekmadienis") %>% tail(n=10)
+```
+
+$$
+ \frac{X_t - X_{t-1}}{X_{t-1}} = \frac{X_t}{X_{t-1}}-1
+$$
+```{r}
+plot(vilnius1$day, vilnius1$g1, type = "l")
+lines(vilnius1$day, vilnius1$g7, col =2)
+```
+
+```{r}
+vilnius2 <- vilnius1 %>% filter(day >= max(day)-days(14))
+plot(vilnius2$day, vilnius2$g1, type = "l")
+lines(vilnius2$day, vilnius2$g7, col =2)
+abline(h=0)
+```
+
+```{r}
+ggplot(aes(x = day,  y = g1), data = vilnius1 %>% filter(day >= max(day)-days(14))) + 
+    geom_point()+ 
+    geom_point(aes(x= day, y= g7), color = "blue", data = vilnius1 %>% filter(weekday == "Sekmadienis") %>% filter(day >= max(day)-days(14))) + 
+    geom_point(aes(x= day, y= g1), color = "blue", data = vilnius1 %>% filter(weekday == "Sekmadienis") %>% filter(day >= max(day)-days(14))) + 
+    geom_line(colour="black") + 
+    geom_line(aes(y = g7), colour="red")+theme_bw()+labs(x = "Date", y = "Growth, %", title = "Day to day and weekly growths for new covid-19 cases in Vilnius")+geom_hline(aes(yintercept=0))  
+  #  geom_text(aes(label = g1), nudge_y = 5)+ 
+   # geom_text(aes(y = g7, label = g7), colour="red", nudge_y = 5)
+```
+
+```{r}
+lt <- lv3 %>% select(day, administrative_level_2,administrative_level_3, confirmed_daily, population)
+nn <- lt %>% group_by(administrative_level_3) %>% summarise(n = n()) %>% ungroup %>% group_by(n) %>% summarise(nn = n())
+lt1 <-  lt %>% group_by(administrative_level_2, administrative_level_3) %>% summarise(n = n(), population= unique(population)) %>% ungroup %>% group_by(administrative_level_2) %>% summarise(n = n(), population = sum(population)) %>% arrange(-n) 
+```
+
+
+```{r}
+lt2 <- lt %>% arrange(administrative_level_3, day) %>% group_by(administrative_level_3) %>% 
+    mutate(g1 = round(100*(confirmed_daily/lag(confirmed_daily, 1) - 1), 2), 
+                                g7 = round(100*(confirmed_daily/lag(confirmed_daily, 7) - 1), 2), 
+                                weekday = weekdays(day))
+
+```
+
+```{r}
+
+llt <- lt %>% filter(day>="2021-03-20", administrative_level_3 %in% c("Kauno m.", "Vilniaus m."))
+
+llt %>% arrange(administrative_level_3, day) %>% group_by(administrative_level_3) %>%  mutate(g1 = round(100*(confirmed_daily/lag(confirmed_daily, 1) - 1), 2), 
+                                g7 = round(100*(confirmed_daily/lag(confirmed_daily, 7) - 1), 2), 
+                                weekday = weekdays(day))
+
+lt2 <- lt %>% arrange(administrative_level_3, day) %>% group_by(administrative_level_3) %>% 
+    mutate(g1 = round(100*(confirmed_daily/lag(confirmed_daily, 1) - 1), 2), 
+                                g7 = round(100*(confirmed_daily/lag(confirmed_daily, 7) - 1), 2), 
+                                weekday = weekdays(day))
+
+aa <- lv3 %>% select(day, administrative_level_3, confirmed_daily, population) %>% 
+  group_by(day) %>% 
+  mutate(confirmed_p = round(100*confirmed_daily/sum(confirmed_daily),2), 
+         pop_p = round(100*population/sum(population),2),
+         diff = confirmed_p-pop_p,
+         relative_daily =confirmed_daily/population*10000) %>%
+  ungroup 
+
+aa1 <- aa %>% filter(day == max(day))
+aa2 <- aa %>% filter(day == "2021-02-17")
+ggplot(aes(x = day, y = confirmed_p), data = aa %>% filter(day>="2021-01-01", administrative_level_3 == "Vilniaus m."))+geom_line()+geom_hline(aes(yintercept = 20.38))+theme_bw()+labs(x = "Data", y = "Procentas nuo visų atvejų", title = "Vilniaus atvejų dalis tarp visų Covid-19 naujų atvejų Lietuvoje")
+```
+
+
+```{r}
+lt3 <- lv3 %>% select(day, administrative_level_2, administrative_level_3, confirmed)
+
+pop <- lv3 %>% select(administrative_level_3, population) %>% unique
+popp <- lv3 %>% select(administrative_level_2,administrative_level_3, population) %>% unique
+
+lt4 <- lt3 %>% arrange(administrative_level_3, day) %>% group_by(administrative_level_3) %>% mutate(confirmed_daily = confirmed - lag(confirmed,1)) %>% ungroup
+
+
+lt41 <- lt4 %>% filter(administrative_level_3 != "Marijampolės")
+
+pop1 <- pop %>% filter(administrative_level_3 != "Vilniaus m.")
+
+lt5 <- lt4 %>% inner_join(pop)
+lt5p <- lt4 %>% inner_join(popp)
+
+lt51 <- lt4 %>% inner_join(pop1)
+
+lt52 <- lt4 %>% left_join(pop1)
+
+lt53 <- lt41 %>% right_join(pop)
+```
+
+```{r}
+lt6 <- lt5 %>% mutate(confirmed_daily_scaled = confirmed_daily/population*100000) %>%
+  arrange(administrative_level_3, day) %>% group_by(administrative_level_3) %>% 
+  mutate(confirmed_daily_sum7 = rollsum(confirmed_daily,7, fill = NA, align ="right"),
+         confirmed_daily_sum14 = rollsum(confirmed_daily,14, fill = NA, align ="right"),
+         confirmed_100k = confirmed_daily_sum14/population*100000,
+         confirmed_100k7 = confirmed_daily_sum7/population*100000,
+         confirmed_mean7 = confirmed_daily_sum7/7,
+         confirmed_mean14 = confirmed_daily_sum14/14,
+         daily14 = confirmed_daily_scaled*14,
+         weekly14 = confirmed_100k7*2
+         ) %>% 
+  ungroup
+```
+
+```{r}
+ggplot(aes(x = day,  y = confirmed_daily), data = lt6 %>% filter(administrative_level_2 == "Vilniaus apskr.")) + geom_line() + 
+  facet_wrap(~administrative_level_3, scales = "free_y")
+```
+

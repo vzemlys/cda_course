@@ -1,0 +1,141 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(dygraphs)
+library(zoo)
+library(xts)
+library(midasr)
+library(lmtest)
+lv1 <- read.csv("https://raw.githubusercontent.com/mpiktas/covid19lt/master/data/lt-covid19-country.csv") %>% mutate(day = ymd(day))
+```
+
+## Data preparation and exploraratory data analysis
+
+```{r}
+cd <- lv1 %>% select(day, confirmed_daily, deaths_daily)
+#cdw <- cd %>% mutate(week = floor_date(day, unit = "week", week_start = 1)) %>% select(-day) %>% 
+#    group_by(week) %>% summarise_all(sum)
+
+cdw <- cd %>% mutate(week = floor_date(day, unit = "week", week_start = 1))  %>% 
+    group_by(week) %>% summarise_at(sum, .vars=c("confirmed_daily","deaths_daily"))
+
+cdw1 <- cdw %>% mutate(dd0 = ifelse(deaths_daily == 0, 1, deaths_daily),
+        cc = log(confirmed_daily)-lag(log(confirmed_daily)), dd = log(dd0)-lag(log(dd0)))
+```
+
+```{r}
+ggplot(aes(x=week, y = cc), data = cdw1)+geom_line()+theme_bw()+geom_line(aes(y = dd), colour="red")+labs(title = "Growths of weekly new cases and deaths of Covid-19 in Lithuania")
+```
+
+```{r}
+ggplot(aes(x=week, y = confirmed_daily), data = cdw1)+geom_line()+theme_bw()+labs(title  = "Weekly new Covid-19 cases in Lithuania")
+```
+
+```{r}
+ggplot(aes(x=week, y = deaths_daily), data = cdw1)+geom_line()+theme_bw()+labs(title = "Weekly Covid-19 deaths in Lithuania")
+```
+## Inital models
+
+```{r}
+m1 <- midas_u(dd~mls(cc, 3:6,1), data = cdw1)
+summary(m1)
+
+```
+
+```{r}
+m1 %>% residuals %>% plot
+```
+```{r}
+predict(m1, newdata = data.frame(cc = c(cdw1$cc,rep(NA,3))))
+```
+
+```{r}
+ff <- data.frame(m1$model[,1], fitted(m1))
+colnames(ff) <- c("actual","fitted")
+xff <- xts(ff, order.by = cdw1$week[as.integer(rownames(m1$model))])
+```
+
+
+```{r}
+m11 <- midas_u(dd~mls(cc, 3:6,1), data = cdw1[-nrow(cdw1),])
+summary(m11)
+```
+
+```{r}
+predict(m11, newdata = data.frame(cc = c(cdw1$cc)))
+```
+
+
+```{r}
+ff <- matrix(NA, nrow=length(48:57),ncol=2)
+for(i in  48:57) {
+    mod <-  midas_u(dd~mls(cc, 3:6,1), data = cdw1[1:i,])
+    ff[i-47,] <- c(cdw1$dd[i+1],tail(predict(mod, newdata=cdw1[1:(i+1),]),n=1))
+}
+```
+
+```{r}
+ff1 <- matrix(NA, nrow=length(48:57),ncol=2)
+for(i in 48:57) {
+    cat("\n Training data set:", (i-47), ":", i, "\n")
+    mod <-  midas_u(dd~mls(cc, 3:6,1), data = cdw1[(i-47):i,])
+    ff1[i-47,] <- c(cdw1$dd[i+1],tail(predict(mod, newdata=cdw1[1:(i+1),]),n=1))
+}
+```
+
+
+```{r}
+m1 <- midas_r(dd~mls(cc, 3:6,1), data = cdw1, start = NULL)
+m2 <- midas_r(dd~mls(cc, 2:5,1), data = cdw1, start = NULL)
+m3 <- midas_r(dd~mls(cc, 1:4,1), data = cdw1, start = NULL)
+m4 <- midas_r(dd~mls(cc, 1:2,1), data = cdw1, start = NULL)
+m5 <- midas_r(dd~mls(cc, 1,1), data = cdw1, start = NULL)
+m6 <- midas_r(dd~mls(cc, 2,1), data = cdw1, start = NULL)
+m7 <- midas_r(dd~mls(cc, 3,1), data = cdw1, start = NULL)
+
+av <- average_forecast(list(m1,m2,m3, m4, m5, m6, m7), data = cdw1, insample = 1:30, outsample = 31:59, type = "recursive")
+```
+
+```{r}
+av1 <- average_forecast(list(m1,m2,m3, m4, m5, m6, m7), data = cdw1, insample = 1:30, outsample = 31:59, type = "rolling")
+
+av2 <- average_forecast(list(m1,m2,m3, m4, m5, m6, m7), data = cdw1, insample = 10:30, outsample = 31:59, type = "recursive")
+
+av3 <- average_forecast(list(m1,m2,m3, m4, m5, m6, m7), data = cdw1, insample = 15:30, outsample = 31:59, type = "recursive")
+```
+
+```{r}
+ff <- xts(cbind(av3$xout,av3$forecast[,5],av3$forecast[,1]),order.by = cdw$week[31:59])
+```
+
+```{r}
+xdd <- xts(cdw1$dd0, order.by = cdw1$week)
+colnames(xdd) <- "dd0"
+colnames(ff) <- c("dd", "flag1", "flag3")
+zz <- cbind(ff, xdd)
+
+zz1 <- exp(cumsum(zz["2020-10-12/",c("flag1","flag3")]))*16
+zzf1 <- exp(log(lag.xts(zz[,"dd0"]))+zz[,"flag1"])
+zzf3 <- exp(log(lag.xts(zz[,"dd0"]))+zz[,"flag3"])
+
+zz2 <- cbind(zzf1,zzf3)
+colnames(zz2) <- c("lev11","lev13")
+colnames(zz1) <- c("clev1","clev3")
+
+ww <- cbind(zz,zz1,zz2)
+
+```
+
+```{r}
+ff %>% dygraph %>% dyRangeSelector
+```
+
+```{r}
+ww[,c("dd0","clev1","clev3","lev11","lev13")] %>% dygraph %>% dyRangeSelector
+```

@@ -1,0 +1,136 @@
+---
+title: "Lecture 9, 2021"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, echo = FALSE, message=FALSE, include=FALSE}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(DT)
+library(zoo)
+lv3 <- read.csv("https://raw.githubusercontent.com/mpiktas/covid19lt/master/data/lt-covid19-level3.csv") %>% mutate(day = ymd(day))
+Sys.setlocale(locale = "lt_LT.UTF-8")
+```
+
+
+## Does vaccination depend on epidemiological situation?
+
+### Analysis for Vilnius
+```{r}
+vln <- lv3 %>% filter(administrative_level_3 == "Vilniaus m.") %>% select(day, confirmed_daily, vaccinated_1_daily, vaccinated_1, confirmed_100k) %>% 
+  mutate(c7 = rollmean(confirmed_daily,7, fill = NA, align ="right"),
+         v7 = rollmean(vaccinated_1_daily,7, fill = NA, align ="right"))
+```
+
+```{r}
+ggplot(aes(x = confirmed_100k, y= vaccinated_1), data = vln) + geom_point()
+```
+
+```{r}
+ggplot(aes(x = day, y = confirmed_100k), data=vln)+geom_line()+geom_line(aes(y=vaccinated_1), colour="red")
+```
+
+```{r}
+ggplot(aes(x = c7, y= v7), data = vln %>% filter(day>="2021-01-01")) + geom_point()
+```
+
+```{r}
+ggplot(aes(x = c7, y= v7), data = vln %>% filter(day>="2021-01-01")) + geom_path()
+```
+
+```{r}
+ggplot(aes(x = confirmed_daily, y= vaccinated_1_daily), data = vln %>% filter(day>="2021-01-01")) +geom_point()
+```
+```{r}
+vln1<- vln %>% mutate(week = floor_date(day, unit ="week", week_start=1)) %>% group_by(week) %>% 
+    summarise(vv = sum(vaccinated_1_daily), cc = sum(confirmed_daily))
+```
+
+```{r}
+ggplot(aes(x = cc, y= vv), data = vln1 %>% filter(vv>0, week>="2021-02-01")) +geom_point()
+```
+
+```{r}
+ggplot(aes(x = day, y = c7), data=vln %>% filter(day>="2021-01-01"))+geom_line()+geom_line(aes(y=v7), colour="red")
+```
+
+```{r}
+vln1 <- vln %>% filter(day>="2021-01-01")
+cor(vln1$c7, vln1$v7)
+```
+
+```{r}
+
+```
+
+## Simulation example
+
+Let us do the simulation analysis in order to understand how linear and quadratic relationships might look in the data.
+
+### Regression with linear term
+
+Start with the simple simulated data.
+
+```{r}
+set.seed(13)
+dt <- data.frame(x = rnorm(100)) %>% mutate(y1 = x*2+1+rnorm(100), y2 = -x*3+2+x^2 + rnorm(100), y3 = x*2+1)
+ggplot(aes(x= x, y =y1),data = dt)+geom_point()+geom_smooth(method="lm")
+```
+
+Let us calculate the correlation
+
+```{r}
+cor(dt$x, dt$y1)
+```
+
+Let us fit the linear model and see the results
+
+```{r}
+mod <- lm(y1~x, data = dt)
+mod %>% summary
+```
+
+```{r}
+dt1 <- dt %>% mutate(res1 = residuals(mod))
+```
+
+```{r}
+ggplot(aes(x = x, y= res1), data = dt1) +geom_point() 
+```
+
+```{r}
+ggplot(aes(x = y1, y= y1+res1), data = dt1) +geom_point()+geom_smooth(method="lm")
+```
+
+### Regression with quadratic term
+
+Let us repeat the same analysis with the quadratic term.
+
+```{r}
+ggplot(aes(x= x, y =y2),data = dt)+geom_point()+geom_smooth()
+```
+
+```{r}
+ggplot(aes(x= x, y =y2),data = dt)+geom_point()+geom_smooth(method="lm", formula ="y~x+I(x^2)")
+```
+
+
+```{r}
+mod2 <- lm(y2~x+I(x^2), data = dt)
+mod2 %>% summary
+```
+
+```{r}
+dt2 <- dt1 %>% mutate(res2 = residuals(mod2))
+```
+
+```{r}
+ggplot(aes(x = x, y= res2), data = dt2) +geom_point() 
+```
+
+```{r}
+ggplot(aes(x = y2, y= y2+res2), data = dt2) +geom_point()+geom_smooth(method="lm")
+```
